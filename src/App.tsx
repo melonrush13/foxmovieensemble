@@ -16,28 +16,23 @@ class App extends Component {
     playing: true,
     url: null,
     volume: 0.8,
+    loop: true
   }
-  // load = url => {
-  //   this.setState({
-  //     url,
-  //     played: 0,
-  //     loaded:0
-  //   })
-  // }
+  
 
   playPause () {
    // this.setState({ playing: !this.state.playing })
    console.log("hi")
   }
 
-  onPlay () {
-   this.setState ({ playing: true })
-   console.log("play")
-
+  onPlay = () => {
+    console.log('onPlay')
+    this.setState({ playing: true })
   }
+  onPause = () => {
+    console.log('onPause')
+    this.setState({ playing: false })
 
-  onPause() {
-   console.log("pause")
 
   }
 
@@ -53,9 +48,11 @@ class App extends Component {
           <h1>ReactPlayer Demo</h1>
           <div className='player-wrapper'>
             <ReactPlayer
+                className = 'react-player'
                 url = {sources.sintelTrailer} //'https://www.youtube.com/watch?v=ysz5S6PUM-U'
                 playing
                 volume = {volume}
+                
             />
           </div>  
         </section>      
