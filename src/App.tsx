@@ -9,6 +9,7 @@ const sources = {
   test: 'http://media.w3.org/2010/05/video/movie_300.webm',
 };
 
+ 
 class App extends Component {
   state = {
     played: 0,
@@ -16,12 +17,21 @@ class App extends Component {
     playing: true,
     url: null,
     volume: 0.8,
-    loop: true
+    loop: true,
+    duration: 0,
+    playbackRate: 1.0,
+
   }
-  
+
+  // load = url => {
+  //   this.setState({
+  //     url,
+  //     played: 0,
+  //     loaded: 0
+  //   })
+  // }
 
   playPause () {
-   // this.setState({ playing: !this.state.playing })
    console.log("hi")
   }
 
@@ -32,15 +42,30 @@ class App extends Component {
   onPause = () => {
     console.log('onPause')
     this.setState({ playing: false })
-
-
   }
 
-  //<ReactPlayer url='https://www.youtube.com/watch?v=ysz5S6PUM-U' playing />
+  setPlaybackRateSlow = () => {
+    this.setState({ playingbackRate: 1.5 })
+  }
+
+  setPlaybackRateFast = () => {
+    this.setState({ playingbackRate: 2 })
+  }
+
+
+  // onDuration = (duration) => {
+  //   console.log('onDuration', duration)
+  //   this.setState({ duration })
+  // }
+
+  // onProgress = state => {
+  //   console.log('onProgress', state)
+  // }
+
+
 
   render() {
-    const { url, playing, volume, loaded, played } = this.state
-   // const SEPARATOR = ' . '
+    const { url, playing, volume, loaded, duration, playbackRate, played } = this.state
 
     return (
       <div className ='app'>
@@ -50,9 +75,12 @@ class App extends Component {
             <ReactPlayer
                 className = 'react-player'
                 url = {sources.sintelTrailer} //'https://www.youtube.com/watch?v=ysz5S6PUM-U'
-                playing
+                playing = {playing}
                 volume = {volume}
-                
+                height = '75%'
+                width = '75%'
+                playbackRate = {playbackRate}
+                //onDuration ={this.onDuration}
             />
           </div>  
         </section>      
@@ -61,6 +89,29 @@ class App extends Component {
           <button onClick={this.playPause}> Play Pause Button</button>
           <button onClick={this.onPause}> Pause</button>
           <button onClick={this.onPlay}> Play</button>
+      
+        </tbody>
+        <tbody>
+          <tr>
+            <td>
+              <h6>Playback Speed</h6>
+              <button onClick={this.setPlaybackRateSlow} value ={.5}>.5</button>
+              <button onClick={this.setPlaybackRateFast} value ={1.5}>1.5</button>
+            </td>
+          </tr>
+         
+        
+        </tbody>
+        <h2>State </h2>
+        <tbody>
+          <tr>
+            <th>Seconds Elapsed:</th>
+            <td>{loaded}</td>
+          </tr>
+          <tr>
+            <th>Time Remaining:</th>
+            <td>{played}</td>
+          </tr>
         </tbody>
       </table>
     </div>
