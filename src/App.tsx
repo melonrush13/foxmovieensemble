@@ -2,17 +2,25 @@ import React, { Component } from 'react';
 import './App.css';
 import ReactPlayer from 'react-player'
 
+
 const sources = {
   sintelTrailer: 'http://media.w3.org/2010/05/sintel/trailer.mp4',
   bunnyTrailer: 'http://media.w3.org/2010/05/bunny/trailer.mp4',
   bunnyMovie: 'http://media.w3.org/2010/05/bunny/movie.mp4',
-  test: 'http://media.w3.org/2010/05/video/movie_300.webm',
+  deadpool: 'https://www.youtube.com/watch?v=ONHBaC-pfsk',
 };
 
+
+// var movies = [
+//     {url : "http://media.w3.org/2010/05/sintel/trailer.mp4", MovieName: "sintelTrailer"},
+//     {url : "http://media.w3.org/2010/05/bunny/trailer.mp4", MovieName: "bunnyTrailer"},
+//     {url : "http://media.w3.org/2010/05/bunny/movie.mp4", MovieName: "bunnyMovie"},
+//     {url: "http://media.w3.org/2010/05/bunny/movie.mp4", MovieName: "test"}
+// ];
+
+
 //used to define a type with properties
-interface Iface {
-  
-}
+//interface Iface { }
 
  
 class App extends Component {
@@ -20,21 +28,14 @@ class App extends Component {
     played: 0,
     loaded: 0,
     playing: true,
-    url: null,
+    url: '',
+   // url: null,
     volume: 0.8,
     loop: true,
     duration: 0,
     playbackRate: 1.0,
 
   }
-
-  // load = url => {
-  //   this.setState({
-  //     url,
-  //     played: 0,
-  //     loaded: 0
-  //   })
-  // }
 
   playPause () {
    console.log("hi")
@@ -55,11 +56,11 @@ class App extends Component {
     this.setState({ playingbackRate: e })
   }
 
-  // onDuration = (duration) => {
-  //   console.log('onDuration', duration)
-  //   this.setState({ duration })
-  // }
-
+  setMovieUrl = (r: string ) => {
+    console.log(r)
+    this.state.url = r;
+    this.setState({ url: r })
+  }
   
   onProgress = (state : {playedSeconds: number }) => {
       console.log('onProgress', state)
@@ -68,9 +69,6 @@ class App extends Component {
     //frame number - num of boxes per frame, 
     //draw # of those frames
   }
-
-  //todo: add function 
-
 
   render() {
     const { url, playing, volume, loaded, duration, playbackRate, played } = this.state
@@ -82,7 +80,9 @@ class App extends Component {
           <div className='player-wrapper'>
             <ReactPlayer
                 className = 'react-player'
-                url = {sources.sintelTrailer} //'https://www.youtube.com/watch?v=ysz5S6PUM-U'
+               // url = {sources.sintelTrailer} //'https://www.youtube.com/watch?v=ysz5S6PUM-U'
+                url = {url} //'https://www.youtube.com/watch?v=ysz5S6PUM-U'
+
                 playing = {playing}
                 volume = {volume}
                 height = '75%'
@@ -109,8 +109,6 @@ class App extends Component {
               <button onClick={() => this.setPlaybackRate(2)}>2</button>
             </td>
           </tr>
-         
-        
         </tbody>
         <h2>State </h2>
         <tbody>
@@ -124,6 +122,28 @@ class App extends Component {
           </tr>
         </tbody>
       </table>
+      <br />
+      <section className='section'>
+        <table>
+          <tbody>
+            <tr> 
+              <th>Sintel Trailer</th>
+              <button onClick={() => this.setMovieUrl(sources.sintelTrailer)}>Watch</button>
+            </tr>
+            <tr>
+              <th>Bunny Movie Trailer</th>
+              <button onClick={() => this.setMovieUrl(sources.bunnyTrailer)}>Watch</button>
+            </tr>
+            <tr>
+              <th>Bunny Movie</th>
+              <button onClick={() => this.setMovieUrl(sources.bunnyMovie)}>Watch </button>
+            </tr> <tr>
+              <th>Deadpool Trailer</th>
+              <button onClick={() => this.setMovieUrl(sources.deadpool)}>Watch</button>
+            </tr>
+          </tbody>
+        </table>
+      </section>
     </div>
     ) 
   }
