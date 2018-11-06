@@ -9,6 +9,11 @@ const sources = {
   test: 'http://media.w3.org/2010/05/video/movie_300.webm',
 };
 
+//used to define a type with properties
+interface Iface {
+  
+}
+
  
 class App extends Component {
   state = {
@@ -44,24 +49,27 @@ class App extends Component {
     this.setState({ playing: false })
   }
 
-  setPlaybackRateSlow = () => {
-    this.setState({ playingbackRate: 1.5 })
+  setPlaybackRate = (e: number) => {
+    console.log(e)
+    this.state.playbackRate = e;
+    this.setState({ playingbackRate: e })
   }
-
-  setPlaybackRateFast = () => {
-    this.setState({ playingbackRate: 2 })
-  }
-
 
   // onDuration = (duration) => {
   //   console.log('onDuration', duration)
   //   this.setState({ duration })
   // }
 
-  // onProgress = state => {
-  //   console.log('onProgress', state)
-  // }
+  
+  onProgress = (state : {playedSeconds: number }) => {
+      console.log('onProgress', state)
 
+    //TODO:
+    //frame number - num of boxes per frame, 
+    //draw # of those frames
+  }
+
+  //todo: add function 
 
 
   render() {
@@ -80,6 +88,7 @@ class App extends Component {
                 height = '75%'
                 width = '75%'
                 playbackRate = {playbackRate}
+                onProgress = {this.onProgress}
                 //onDuration ={this.onDuration}
             />
           </div>  
@@ -94,9 +103,10 @@ class App extends Component {
         <tbody>
           <tr>
             <td>
-              <h6>Playback Speed</h6>
-              <button onClick={this.setPlaybackRateSlow} value ={.5}>.5</button>
-              <button onClick={this.setPlaybackRateFast} value ={1.5}>1.5</button>
+            <h6>Playback Speed</h6>
+              <button onClick={()=> this.setPlaybackRate(.5)}>.5</button>
+              <button onClick={()=> this.setPlaybackRate(1)}>1</button>
+              <button onClick={() => this.setPlaybackRate(2)}>2</button>
             </td>
           </tr>
          
@@ -106,7 +116,7 @@ class App extends Component {
         <tbody>
           <tr>
             <th>Seconds Elapsed:</th>
-            <td>{loaded}</td>
+            <td></td>
           </tr>
           <tr>
             <th>Time Remaining:</th>
