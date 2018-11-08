@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
 import ReactPlayer from 'react-player'
+import { number } from 'prop-types';
 
 const movies = {
   sintelTrailer: 'http://media.w3.org/2010/05/sintel/trailer.mp4',
@@ -9,9 +10,22 @@ const movies = {
   deadpool: 'https://www.youtube.com/watch?v=ONHBaC-pfsk',
 };
 
+// interface Props {
+//   boxHeight: Number;
+//   boxWidth: Number;
+// }
 
+// interface State {
+//   boxHeight: Number;
+//   boxWidth: Number;
+// }
 
-class App extends Component {
+class App extends Component { 
+  // constructor() {
+  //   super();
+
+  //   this.onFieldChange = this.onFieldChange.bind(this);
+  // }
   state = {
     played: 0,
     loaded: 0,
@@ -22,9 +36,12 @@ class App extends Component {
     duration: 0,
     playbackRate: 1.0,
     loadedSeconds: 0,
-    playedSeconds: 0
-  }
+    playedSeconds: 0,
+    boxHeight: 0,
+    boxWidth: 0,
 
+  }
+  
 
   playPause () {
     if (this.state.playing == true) {
@@ -74,15 +91,33 @@ class App extends Component {
       var canvas : any = this.refs.boundingboxcanvas
       var ctx = canvas.getContext("2d");
       ctx.fillStyle = "#FF0000";
-      ctx.fillRect(0,0,150,200);
+      ctx.fillRect(0,0,500,500);
+      ctx.moveTo(0,0);
 
 
     }
 
   boundingBoxClicked() {
     console.log("video clicked")
-
   }
+
+
+  onHeightSubmit(d: any) {
+    console.log("box height clicked")
+    d.preventDefault(); 
+    this.setState({
+      boxHeight: d.target.value,
+    })
+  }
+  onWidthSubmit(c: any) {
+    console.log("box width clicked")
+    c.preventDefault(); 
+    this.setState({
+      boxWidth: c.target.value,
+    })
+  }
+
+
 
   render() {
     const { url, playing, volume, loaded, duration, playbackRate, played } = this.state
@@ -91,7 +126,7 @@ class App extends Component {
       <div className ='app'>
         <section className='videoPlayer'>
           <div id="title">
-            <h1>ReactPlayer Demo</h1>
+            <h1>Fox Movie Ensemble</h1>
           </div>
           <div className='player-wrapper'>
             <div id="base">
@@ -103,6 +138,8 @@ class App extends Component {
                   volume = {volume}
                   playbackRate = {playbackRate}
                   onProgress = {this.onProgress}
+                  //width - 640px
+                  //height - 360px
               />
             </div>
             <div id="overlay">
@@ -128,13 +165,45 @@ class App extends Component {
                   <button onClick={() => this.setPlaybackRate(2)}>2</button>
                 </td>
               </tr>
+              <tr>
+                <th>Box Height</th>
+                <td>
+                  <form onSubmit={(d) => this.onHeightSubmit(d)}>
+                    <input 
+                      id="boxheight" type='text' name="boxHeight" placeholder='Enter Height'
+                      onChange={d => this.setState({boxHeight: d.target.value})} 
+                      value={this.state.boxHeight}></input>
+                    <button id="subHeight" type="submit">Change</button>
+                  </form>
+               </td>
+                <th>Box Width</th>
+                <td>
+                  <form onSubmit={(c) => this.onWidthSubmit(c)}>
+                    <input 
+                      id="boxwidth" type='text' name="boxWidth" placeholder='Enter Width' 
+                      onChange={c => this.setState({boxWidth: c.target.value})} 
+                      value={this.state.boxWidth} ></input>
+                    <button id="subWidth" type="submit">Change</button>
+                  </form>
+                </td>
+              </tr>
+              <tr>
+                <th>Input</th>
+                <td>
+                  <label>{this.state.boxHeight}</label>
+                </td>
+                <th>Input</th>
+                <td>
+                  <label>{this.state.boxWidth}</label>
+                </td>
+              </tr>
             </tbody>
           </table>
           </section>
   
           <section className='section'>
           <h2>Movies</h2>
-            <table> 
+            <table id = 'movies'> 
               <tbody>
                 <tr>
                   <th>Sintel Trailer</th>
@@ -162,6 +231,7 @@ class App extends Component {
                 </tr>
               </tbody>
             </table>
+          </section>
 
           <h2>State</h2>
           <table id="time">
@@ -176,7 +246,6 @@ class App extends Component {
               </tr>
             </tbody>
           </table>
-        </section>      
       </div>
     ) 
   }
