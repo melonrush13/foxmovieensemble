@@ -37,8 +37,8 @@ class App extends Component {
     playbackRate: 1.0,
     loadedSeconds: 0,
     playedSeconds: 0,
-    boxHeight: 0,
-    boxWidth: 0,
+    boxHeight: 100,
+    boxWidth: 200,
 
   }
   
@@ -91,7 +91,10 @@ class App extends Component {
       var canvas : any = this.refs.boundingboxcanvas
       var ctx = canvas.getContext("2d");
       ctx.fillStyle = "#FF0000";
-      ctx.fillRect(0,0,500,500);
+      //ctx.fillRect(0,0,100,100);
+      ctx.fillRect(0,0,this.state.boxHeight,this.state.boxWidth);
+      console.log("height " + this.state.boxHeight)
+      console.log("width " + this.state.boxWidth)
       ctx.moveTo(0,0);
 
 
@@ -108,6 +111,8 @@ class App extends Component {
     this.setState({
       boxHeight: d.target.value,
     })
+    console.log(this.state.boxHeight)
+
   }
   onWidthSubmit(c: any) {
     console.log("box width clicked")
@@ -115,6 +120,7 @@ class App extends Component {
     this.setState({
       boxWidth: c.target.value,
     })
+    console.log(this.state.boxWidth)
   }
 
 
