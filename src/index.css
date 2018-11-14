@@ -24,20 +24,28 @@ h2 {
   margin-left: 20px;
 }
 
-#base {
-  background-color: lightseagreen;
-  width: 640px;
-  height: 360px;
+.react-player {
+  position: absolute;
+  z-index: -1;
 }
 
-#overlay {
-  background-color: lightblue;
+#videocontainer {
+  display:inline-block;
+  position: relative;
   width: 640px;
   height: 360px;
+  color: red;
+  margin: 0 auto; 
+  z-index: 10px;
+  border:5px solid black; 
+  border-radius: 10px; 
+  box-shadow: 0 5px 50px #333
+
+}
+
+#canvascontainer { 
   position: relative;
-  left:0px;
-  color:red;;
-  z-index: -1;
+  z-index: 20px;
 
 }
 
@@ -57,6 +65,10 @@ h2 {
   margin-left: 20px;
 }
 
+#tags {
+  background-color: #7a7e85;
+  margin-left: 20px;
+}
 
 .canvas {
   background-color: purple; 

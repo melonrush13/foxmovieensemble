@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
 import ReactPlayer from 'react-player'
-import { number } from 'prop-types';
 
 const movies = {
   sintelTrailer: 'http://media.w3.org/2010/05/sintel/trailer.mp4',
@@ -10,22 +9,16 @@ const movies = {
   deadpool: 'https://www.youtube.com/watch?v=ONHBaC-pfsk',
 };
 
-// interface Props {
-//   boxHeight: Number;
-//   boxWidth: Number;
-// }
+class App extends React.Component { 
+  constructor(props: any) {
+    super(props);
 
-// interface State {
-//   boxHeight: Number;
-//   boxWidth: Number;
-// }
+    this.handleHeightChange = this.handleHeightChange.bind(this);
+    this.handleHeightSubmit = this.handleHeightSubmit.bind(this);
+    this.handleWidthChange = this.handleWidthChange.bind(this);
+    this.handleWidthSubmit = this.handleWidthSubmit.bind(this);
+  }
 
-class App extends Component { 
-  // constructor() {
-  //   super();
-
-  //   this.onFieldChange = this.onFieldChange.bind(this);
-  // }
   state = {
     played: 0,
     loaded: 0,
@@ -38,10 +31,9 @@ class App extends Component {
     loadedSeconds: 0,
     playedSeconds: 0,
     boxHeight: 100,
-    boxWidth: 200,
+    boxWidth: 400,
+  } 
 
-  }
-  
 
   playPause () {
     if (this.state.playing == true) {
@@ -50,7 +42,6 @@ class App extends Component {
     else {
       this.setState({ playing: true })
     }
-
   }
 
   onPlay = () => {
@@ -76,58 +67,47 @@ class App extends Component {
   
   onProgress = (state : {playedSeconds: number , loadedSeconds: number, played: number}) => {
       console.log('onProgress ', state)
-      console.log("secs: " + state.playedSeconds);
-      console.log("loaded: " + state.loadedSeconds);
-      console.log("played: " + state.played);
-      
+      // console.log("secs: " + state.playedSeconds);    
       this.setState({loadedSeconds: state.loadedSeconds}); 
       this.setState({playedSeconds: state.playedSeconds});
-
-      // let played = state.played;
-      // let loaded = state.loadedSeconds;
-      // const secs = state.playedSeconds;
-      // let frames = secs * 60;
-
-      var canvas : any = this.refs.boundingboxcanvas
-      var ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#FF0000";
-      //ctx.fillRect(0,0,100,100);
-      ctx.fillRect(0,0,this.state.boxHeight,this.state.boxWidth);
-      console.log("height " + this.state.boxHeight)
-      console.log("width " + this.state.boxWidth)
-      ctx.moveTo(0,0);
-
-
     }
 
   boundingBoxClicked() {
     console.log("video clicked")
   }
 
+  componentDidUpdate() {
+    console.log("Hi Mel!");
+    
+    var canvas : any = this.refs.myCanvas
+    const ctx = canvas.getContext("2d")
+    ctx.fillStyle = "red";
+    ctx.fillRect(0, 0, this.state.boxWidth, this.state.boxHeight);
 
-  onHeightSubmit(d: any) {
-    console.log("box height clicked")
-    d.preventDefault(); 
-    this.setState({
-      boxHeight: d.target.value,
-    })
-    console.log(this.state.boxHeight)
-
+    console.log("height " + this.state.boxHeight)
+    console.log("width " + this.state.boxWidth)
   }
-  onWidthSubmit(c: any) {
-    console.log("box width clicked")
-    c.preventDefault(); 
-    this.setState({
-      boxWidth: c.target.value,
-    })
-    console.log(this.state.boxWidth)
+ 
+  handleWidthSubmit(event: any) {
+    alert('New change to bounding box width of: ' + this.state.boxWidth);
+    event.preventDefault();
+  }
+  handleWidthChange = (event : any) => {
+    this.setState({ boxWidth: event.target.value });
   }
 
+  handleHeightSubmit(event: any) {
+    alert('New change to bounding box height of: ' + this.state.boxHeight);
+    event.preventDefault();
+  }
+  handleHeightChange = (event : any) => {
+    this.setState({ boxHeight: event.target.value});
+  }
 
-
+ 
   render() {
     const { url, playing, volume, loaded, duration, playbackRate, played } = this.state
-
+    
     return (
       <div className ='app'>
         <section className='videoPlayer'>
@@ -135,7 +115,7 @@ class App extends Component {
             <h1>Fox Movie Ensemble</h1>
           </div>
           <div className='player-wrapper'>
-            <div id="base">
+            <div id="videocontainer">
               <ReactPlayer
                   className = 'react-player'
                 // url = {sources.sintelTrailer} //'https://www.youtube.com/watch?v=ysz5S6PUM-U'
@@ -146,10 +126,10 @@ class App extends Component {
                   onProgress = {this.onProgress}
                   //width - 640px
                   //height - 360px
+                  
               />
-            </div>
-            <div id="overlay">
-              <canvas ref="boundingboxcanvas" onClick={this.boundingBoxClicked}></canvas>
+              <canvas id="canvas" ref="myCanvas" width="640" height="360" onClick={this.boundingBoxClicked}></canvas>
+
             </div>
           </div>  
           <h2>Settings</h2>
@@ -171,42 +151,64 @@ class App extends Component {
                   <button onClick={() => this.setPlaybackRate(2)}>2</button>
                 </td>
               </tr>
+            </tbody>
+          </table>
+
+          <h2>State</h2>
+          <table id="time">
+            <tbody>
               <tr>
-                <th>Box Height</th>
-                <td>
-                  <form onSubmit={(d) => this.onHeightSubmit(d)}>
-                    <input 
-                      id="boxheight" type='text' name="boxHeight" placeholder='Enter Height'
-                      onChange={d => this.setState({boxHeight: d.target.value})} 
-                      value={this.state.boxHeight}></input>
-                    <button id="subHeight" type="submit">Change</button>
-                  </form>
-               </td>
-                <th>Box Width</th>
-                <td>
-                  <form onSubmit={(c) => this.onWidthSubmit(c)}>
-                    <input 
-                      id="boxwidth" type='text' name="boxWidth" placeholder='Enter Width' 
-                      onChange={c => this.setState({boxWidth: c.target.value})} 
-                      value={this.state.boxWidth} ></input>
-                    <button id="subWidth" type="submit">Change</button>
-                  </form>
-                </td>
+                <th>Seconds Ellapsed: </th>
+                <td> {this.state.playedSeconds} </td>
               </tr>
               <tr>
-                <th>Input</th>
-                <td>
-                  <label>{this.state.boxHeight}</label>
-                </td>
-                <th>Input</th>
-                <td>
-                  <label>{this.state.boxWidth}</label>
-                </td>
+                <th>Loaded:</th>
+                <td> {this.state.loadedSeconds} </td>
               </tr>
             </tbody>
           </table>
+          <h2>Tags</h2>
+          <table id="tags">
+            <tbody>
+              <tr>
+                <th>Box Width: </th>
+                <td> {this.state.boxWidth} </td>
+              </tr>
+              <tr>
+                <th>Modify:</th>
+                <td>
+                 <form onSubmit={this.handleWidthSubmit}>
+                    <input 
+                      name="newwidth" 
+                      ref="newwidth"
+                      type="text" 
+                      value={this.state.boxWidth} 
+                      onChange={this.handleWidthChange}/>
+                  <input type="submit" value="Change!"></input>
+                </form>
+                </td>
+              </tr>
+              <tr>
+                <th>Box Height: </th>
+                <td> {this.state.boxHeight} </td>
+              </tr>
+              <tr>
+                <th>Modify:</th>
+                <td>
+                 <form onSubmit={this.handleHeightSubmit}>
+                    <input 
+                      name="newheight" 
+                      ref="newheight"
+                      type="text" 
+                      value={this.state.boxHeight} 
+                      onChange={this.handleHeightChange}/>
+                  <input type="submit" value="Change!"></input>
+                </form>
+                </td>
+              </tr>
+            </tbody>
+          </table>        
           </section>
-  
           <section className='section'>
           <h2>Movies</h2>
             <table id = 'movies'> 
@@ -238,20 +240,6 @@ class App extends Component {
               </tbody>
             </table>
           </section>
-
-          <h2>State</h2>
-          <table id="time">
-            <tbody>
-              <tr>
-                <th>Seconds Ellapsed: </th>
-                <td> {this.state.playedSeconds} </td>
-              </tr>
-              <tr>
-                <th>Loaded:</th>
-                <td> {this.state.loadedSeconds} </td>
-              </tr>
-            </tbody>
-          </table>
       </div>
     ) 
   }
