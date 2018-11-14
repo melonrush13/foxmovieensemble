@@ -35,6 +35,15 @@ class App extends React.Component {
   } 
 
 
+  componentDidMount() {
+    console.log("HELLO Mel!");
+  }
+
+  componentDidUpdate() {
+    console.log("Hi Mel!");
+    this.updateCanvas();
+  
+  }
   playPause () {
     if (this.state.playing == true) {
       this.setState({ playing: false })
@@ -43,7 +52,6 @@ class App extends React.Component {
       this.setState({ playing: true })
     }
   }
-
   onPlay = () => {
     console.log('onPlay')
     this.setState({ playing: true })
@@ -58,7 +66,6 @@ class App extends React.Component {
     this.state.playbackRate = e;
     this.setState({ playingbackRate: e })
   }
-
   setMovieUrl = (r: string ) => {
     console.log(r)
     this.state.url = r;
@@ -74,11 +81,9 @@ class App extends React.Component {
 
   boundingBoxClicked() {
     console.log("video clicked")
-  }
 
-  componentDidUpdate() {
-    console.log("Hi Mel!");
-    
+  }
+  updateCanvas() {
     var canvas : any = this.refs.myCanvas
     const ctx = canvas.getContext("2d")
     ctx.fillStyle = "red";
