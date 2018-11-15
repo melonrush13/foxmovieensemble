@@ -193,7 +193,8 @@ class App extends React.Component {
                     height={100} 
                     draggable 
                     name="myRect"
-                    fill={this.state.isDragging ? 'orange' : 'red'}
+                    fill={this.state.isDragging ? 'orange' : 'transparent'}
+                    stroke="black"
                     onDragStart={() => {  
                       this.setState({
                         isDragging: true
