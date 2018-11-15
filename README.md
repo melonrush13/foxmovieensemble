@@ -8,6 +8,8 @@ Description of the project
 # Getting started
 
 # Dependencies
+Jekyll
+
 
 # Run it locally
 

@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import './App.css';
 import ReactPlayer from 'react-player'
+import {Stage, Layer, Rect, Transformer } from 'react-konva'
+import Konva from 'konva'
 
 const movies = {
   sintelTrailer: 'http://media.w3.org/2010/05/sintel/trailer.mp4',
@@ -8,6 +10,40 @@ const movies = {
   bunnyMovie: 'http://media.w3.org/2010/05/bunny/movie.mp4',
   deadpool: 'https://www.youtube.com/watch?v=ONHBaC-pfsk',
 };
+
+const media: IMedia<IVideoPrediction> = {
+  title: 'xyz',
+  sourceUrl: 'xyxxx',
+  predictions: [{classifier: 'deadpool', confidence: 2, xStart: 2, yStart: 2, xEnd: 4, yEnd: 4, time: 4}],
+}
+
+interface IMedia<PredictionTypes extends IVisualPrediction | IVideoPrediction | IAudioPrediction> {
+  title: string
+  sourceUrl: string // URL to either video, image, or audio file
+  predictions: PredictionTypes[]
+}
+
+interface IPrediction {
+  classifier: string
+  confidence: number // 0 - 100
+}
+
+interface IVisualPrediction extends IPrediction {
+  xStart: number // top left x
+  yStart: number // top left y
+  xEnd: number // bottom right x
+  yEnd: number // bottom right y
+}
+
+interface IVideoPrediction extends IVisualPrediction {
+  time: number // time in ms relative to 0:00:00.000 in source
+}
+
+interface IAudioPrediction extends IPrediction {
+  time: number // time in ms relative to 0:00:00.000 in source
+  duration: number // duration in ms
+}
+
 
 class App extends React.Component { 
   constructor(props: any) {
@@ -19,29 +55,44 @@ class App extends React.Component {
     this.handleWidthSubmit = this.handleWidthSubmit.bind(this);
   }
 
-  state = {
-    played: 0,
-    loaded: 0,
-    playing: true,
-    url: '', // url: null,
-    volume: 0.8,
-    loop: true,
-    duration: 0,
-    playbackRate: 1.0,
-    loadedSeconds: 0,
-    playedSeconds: 0,
-    boxHeight: 100,
-    boxWidth: 400,
+
+  state: { //media:IMedia<IVideoPrediction>,
+          played:number, loaded:number, playing: boolean, url:string, 
+          volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
+          playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean } = {
+
+      played: 0,
+      loaded: 0,
+      playing: true,
+      url: '', // url: null,
+      volume: 0.8,
+      loop: true,
+      duration: 0,
+      playbackRate: 1.0,
+      loadedSeconds: 0,
+      playedSeconds: 0,
+      boxHeight: 100,
+      boxWidth: 100,
+      isDragging: false,
+     // media: '',
+
+    // rectangles: [ 
+    //   { x: 10, y: 10, width: 100, height: 100, fill: 'red', name: 'rect1'},
+    //   { x: 20, y: 20, width: 100, height: 100, fill: 'green', name: 'rect2'},
+    // ],
+  
   } 
 
 
   componentDidMount() {
     console.log("HELLO Mel!");
+   // this.updateCanvas();
+
+
   }
 
   componentDidUpdate() {
-    console.log("Hi Mel!");
-    this.updateCanvas();
+  //  this.updateCanvas();
   
   }
   playPause () {
@@ -89,8 +140,8 @@ class App extends React.Component {
     ctx.fillStyle = "red";
     ctx.fillRect(0, 0, this.state.boxWidth, this.state.boxHeight);
 
-    console.log("height " + this.state.boxHeight)
-    console.log("width " + this.state.boxWidth)
+    //console.log("height " + this.state.boxHeight)
+    //  console.log("width " + this.state.boxWidth)
   }
  
   handleWidthSubmit(event: any) {
@@ -109,7 +160,10 @@ class App extends React.Component {
     this.setState({ boxHeight: event.target.value});
   }
 
- 
+  handleTransform = () => {
+    console.log("transforming.....");
+  }
+
   render() {
     const { url, playing, volume, loaded, duration, playbackRate, played } = this.state
     
@@ -121,20 +175,46 @@ class App extends React.Component {
           </div>
           <div className='player-wrapper'>
             <div id="videocontainer">
+            
               <ReactPlayer
                   className = 'react-player'
-                // url = {sources.sintelTrailer} //'https://www.youtube.com/watch?v=ysz5S6PUM-U'
                   url = {url} 
                   playing = {playing}
                   volume = {volume}
                   playbackRate = {playbackRate}
                   onProgress = {this.onProgress}
-                  //width - 640px
-                  //height - 360px
-                  
               />
-              <canvas id="canvas" ref="myCanvas" width="640" height="360" onClick={this.boundingBoxClicked}></canvas>
+              <Stage width={640} height={360} className="konvastage">
+                <Layer>
+                  <Rect
+                    x={0}
+                    y={0} 
+                    width={100} 
+                    height={100} 
+                    draggable 
+                    name="myRect"
+                    fill={this.state.isDragging ? 'orange' : 'red'}
+                    onDragStart={() => {  
+                      this.setState({
+                        isDragging: true
+                      });
+                      console.log("Dragging started!");
+                  //    console.log(this.state.rectangles);
 
+                    }}
+                    onDragEnd={() => {
+                      this.setState({
+                        isDragging: false,
+                      });
+                      console.log("Done dragging!");
+                    }}
+                    onTransformStart={() => {
+                      console.log("oh hai")
+                    }}
+                    />
+                </Layer>
+              </Stage>
+              {/* <canvas id="canvas" ref="myCanvas" width="640" height="360" onClick={this.boundingBoxClicked}></canvas> */}        
             </div>
           </div>  
           <h2>Settings</h2>
