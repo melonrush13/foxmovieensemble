@@ -2,7 +2,8 @@ import React, { Component } from 'react';
 import './App.css';
 import ReactPlayer from 'react-player'
 import {Stage, Layer, Rect, Transformer } from 'react-konva'
-import Konva from 'konva'
+
+//import Search from '../components/search'
 
 const movies = {
   sintelTrailer: 'http://media.w3.org/2010/05/sintel/trailer.mp4',
@@ -12,9 +13,18 @@ const movies = {
 };
 
 const media: IMedia<IVideoPrediction> = {
-  title: 'xyz',
-  sourceUrl: 'xyxxx',
-  predictions: [{classifier: 'deadpool', confidence: 2, xStart: 2, yStart: 2, xEnd: 4, yEnd: 4, time: 4}],
+  title: 'Deadpool One',
+  sourceUrl: 'https://www.youtube.com/watch?v=ONHBaC-pfsk',
+  predictions: [{classifier: 'gun', confidence: 1, xStart: 0, yStart: 0, xEnd: 10, yEnd: 10, time: 4}],
+}
+
+const mediaTwo: IMedia<IVideoPrediction> = {
+  title: 'Deadpool 2',
+  sourceUrl: 'https://www.youtube.com/watch?v=D86RtevtfrA',
+  predictions: [{classifier: 'gun', confidence: 1, xStart: 0, yStart: 0, xEnd: 10, yEnd: 10, time: 4},
+                {classifier: 'sex', confidence: 1, xStart: 10, yStart: 10, xEnd: 20, yEnd: 20, time: 10},
+                {classifier: 'deadpool', confidence: 1, xStart: 20, yStart: 20, xEnd: 30, yEnd: 30, time: 12}
+              ],
 }
 
 interface IMedia<PredictionTypes extends IVisualPrediction | IVideoPrediction | IAudioPrediction> {
@@ -56,10 +66,11 @@ class App extends React.Component {
   }
 
 
-  state: { //media:IMedia<IVideoPrediction>,
+  state: { media:IMedia<IVideoPrediction>,
           played:number, loaded:number, playing: boolean, url:string, 
           volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
-          playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean } = {
+          playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, startbbx: number,
+          startbby: number} = {
 
       played: 0,
       loaded: 0,
@@ -74,7 +85,15 @@ class App extends React.Component {
       boxHeight: 100,
       boxWidth: 100,
       isDragging: false,
-     // media: '',
+      startbbx: 10,
+      startbby: 10,
+
+      media: {
+        title: '',
+        sourceUrl: '',
+        predictions:[],
+      }
+     
 
     // rectangles: [ 
     //   { x: 10, y: 10, width: 100, height: 100, fill: 'red', name: 'rect1'},
@@ -87,10 +106,19 @@ class App extends React.Component {
   componentDidMount() {
     console.log("HELLO Mel!");
    // this.updateCanvas();
+   // console.log("Media Object " + this.state.media);
+   // console.log("Media Object Title: " + media.title);
+   // console.log("Media Object Predictions: " + media.predictions);
 
+    console.log("mediatwo")
+    console.log(mediaTwo);
+    console.log(mediaTwo.predictions);
+    console.log("media")
+    console.log(media);
 
+    console.log()
   }
-
+  
   componentDidUpdate() {
   //  this.updateCanvas();
   
@@ -164,6 +192,13 @@ class App extends React.Component {
     console.log("transforming.....");
   }
 
+  onSearch = (event: any) => {
+    console.log("searching tags....")
+
+    //console.log(deadpoolTwoObject.predictions[0]);
+
+  }
+
   render() {
     const { url, playing, volume, loaded, duration, playbackRate, played } = this.state
     
@@ -187,8 +222,8 @@ class App extends React.Component {
               <Stage width={640} height={360} className="konvastage">
                 <Layer>
                   <Rect
-                    x={0}
-                    y={0} 
+                    x={this.state.startbbx}
+                    y={this.state.startbby} 
                     width={100} 
                     height={100} 
                     draggable 
@@ -208,6 +243,8 @@ class App extends React.Component {
                         isDragging: false,
                       });
                       console.log("Done dragging!");
+                      console.log("new x and y :" + this.state.startbbx, this.state.startbby)
+                      //console.log({myrect.x})
                     }}
                     onTransformStart={() => {
                       console.log("oh hai")
@@ -235,6 +272,12 @@ class App extends React.Component {
                   <button onClick={()=> this.setPlaybackRate(.5)}>.5</button>
                   <button onClick={()=> this.setPlaybackRate(1)}>1</button>
                   <button onClick={() => this.setPlaybackRate(2)}>2</button>
+                </td>
+              </tr>
+              <tr>
+                <th>Search</th>
+                <td>
+                  <input type="text" onChange={this.onSearch} placeholder="Search by classifier.." />
                 </td>
               </tr>
             </tbody>
