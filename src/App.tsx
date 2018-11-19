@@ -12,18 +12,21 @@ const movies = {
   deadpool: 'https://www.youtube.com/watch?v=ONHBaC-pfsk',
 };
 
-const media: IMedia<IVideoPrediction> = {
-  title: 'Deadpool One',
-  sourceUrl: 'https://www.youtube.com/watch?v=ONHBaC-pfsk',
-  predictions: [{classifier: 'gun', confidence: 1, xStart: 0, yStart: 0, xEnd: 10, yEnd: 10, time: 4}],
-}
+// const media: IMedia<IVideoPrediction> = {
+//   title: 'Deadpool One',
+//   sourceUrl: 'https://www.youtube.com/watch?v=ONHBaC-pfsk',
+//   predictions: [{classifier: 'gun', confidence: 1, xStart: 300, yStart: 300, xEnd: 350, yEnd: 350, time: 4},
+//                 {classifier: 'sex', confidence: 1, xStart: 100, yStart: 100, xEnd: 20, yEnd: 20, time: 10},
+//                 {classifier: 'deadpool', confidence: 1, xStart: 300, yStart: 300, xEnd: 30, yEnd: 30, time: 12}
+//   ],
+// }
 
 const mediaTwo: IMedia<IVideoPrediction> = {
   title: 'Deadpool 2',
   sourceUrl: 'https://www.youtube.com/watch?v=D86RtevtfrA',
-  predictions: [{classifier: 'gun', confidence: 1, xStart: 0, yStart: 0, xEnd: 10, yEnd: 10, time: 4},
-                {classifier: 'sex', confidence: 1, xStart: 10, yStart: 10, xEnd: 20, yEnd: 20, time: 10},
-                {classifier: 'deadpool', confidence: 1, xStart: 20, yStart: 20, xEnd: 30, yEnd: 30, time: 12}
+  predictions: [{classifier: 'gun', confidence: 1, xStart: 0, yStart: 0, xEnd: 100, yEnd: 100, time: 4},
+                {classifier: 'sex', confidence: 1, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 10},
+                {classifier: 'deadpool', confidence: 1, xStart: 200, yStart: 200, xEnd: 300, yEnd: 300, time: 12}
               ],
 }
 
@@ -70,7 +73,7 @@ class App extends React.Component {
           played:number, loaded:number, playing: boolean, url:string, 
           volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
           playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, startbbx: number,
-          startbby: number} = {
+          startbby: number, categories: Array<string>, color: string } = {
 
       played: 0,
       loaded: 0,
@@ -87,36 +90,48 @@ class App extends React.Component {
       isDragging: false,
       startbbx: 10,
       startbby: 10,
+      categories: mediaTwo.predictions.map(a => a.classifier), 
+      color: '',
+      
+      media: mediaTwo,
+      // media: {
+      //   title: '',
+      //   sourceUrl: '',
+      //   predictions:[],
+      // }
 
-      media: {
-        title: '',
-        sourceUrl: '',
-        predictions:[],
-      }
-     
-
-    // rectangles: [ 
-    //   { x: 10, y: 10, width: 100, height: 100, fill: 'red', name: 'rect1'},
-    //   { x: 20, y: 20, width: 100, height: 100, fill: 'green', name: 'rect2'},
-    // ],
-  
+      
   } 
 
 
   componentDidMount() {
     console.log("HELLO Mel!");
    // this.updateCanvas();
-   // console.log("Media Object " + this.state.media);
-   // console.log("Media Object Title: " + media.title);
-   // console.log("Media Object Predictions: " + media.predictions);
 
-    console.log("mediatwo")
-    console.log(mediaTwo);
-    console.log(mediaTwo.predictions);
-    console.log("media")
-    console.log(media);
+    // if(mediaTwo.predictions[0].classifier==='gun') { console.log('heyo'); }
 
-    console.log()
+    // var i;
+    // var counter = 0;
+    // for(i = 0; i < mediaTwo.predictions.length; i++) {
+    //   counter ++;
+    //   console.log("current count: " + counter)
+
+    //   if(media.predictions[i].classifier === 'deadpool') {
+    //     this.state.color = 'red'
+    //   }
+    //   if(media.predictions[i].classifier === 'gun') {
+    //     this.state.color = 'black'
+    //   }
+    //   if(media.predictions[i].classifier === 'sex') {
+    //    //change to setstate
+    //     this.state.color = 'pink'
+    //   }
+    //   console.log(this.state.color);
+    // }
+    
+
+   
+    
   }
   
   componentDidUpdate() {
@@ -221,35 +236,33 @@ class App extends React.Component {
               />
               <Stage width={640} height={360} className="konvastage">
                 <Layer>
-                  <Rect
-                    x={this.state.startbbx}
-                    y={this.state.startbby} 
-                    width={100} 
-                    height={100} 
-                    draggable 
-                    name="myRect"
-                    fill={this.state.isDragging ? 'orange' : 'transparent'}
-                    stroke="black"
-                    onDragStart={() => {  
-                      this.setState({
-                        isDragging: true
-                      });
-                      console.log("Dragging started!");
-                  //    console.log(this.state.rectangles);
+                  {
+                    this.state.media.predictions.map((prediction) => {return <Rect
+                      x= {prediction.xStart}
+                      y= {prediction.yStart}
+                      width={prediction.xEnd - prediction.xStart} 
+                      height={prediction.yEnd - prediction.yStart} 
+                      draggable 
+                      name="myRect"
+                      fill={this.state.isDragging ? 'red' : 'transparent'}
+                      stroke="black"
 
-                    }}
-                    onDragEnd={() => {
-                      this.setState({
-                        isDragging: false,
-                      });
-                      console.log("Done dragging!");
-                      console.log("new x and y :" + this.state.startbbx, this.state.startbby)
-                      //console.log({myrect.x})
-                    }}
-                    onTransformStart={() => {
-                      console.log("oh hai")
-                    }}
-                    />
+                      //stroke = prediction.classifier
+                      onDragStart={() => {  
+                        this.setState({ isDragging: true });
+                        console.log("Dragging started! of Rec1");
+                      }}
+                      onDragEnd={() => { this.setState({ isDragging: false });
+                        console.log("Done dragging!");
+                        console.log("new x and y :" + this.state.startbbx, this.state.startbby)
+                        
+                      }}
+                      onTransformStart={() => {
+                        console.log("oh hai")
+                      }}
+                      />})
+                    
+                  }
                 </Layer>
               </Stage>
               {/* <canvas id="canvas" ref="myCanvas" width="640" height="360" onClick={this.boundingBoxClicked}></canvas> */}        
@@ -278,6 +291,10 @@ class App extends React.Component {
                 <th>Search</th>
                 <td>
                   <input type="text" onChange={this.onSearch} placeholder="Search by classifier.." />
+                  
+                </td>
+                <td>
+                  {this.state.categories}
                 </td>
               </tr>
             </tbody>
