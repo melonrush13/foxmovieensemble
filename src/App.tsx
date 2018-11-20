@@ -3,7 +3,6 @@ import './App.css';
 import ReactPlayer from 'react-player'
 import {Stage, Layer, Rect, Transformer } from 'react-konva'
 
-//import Search from '../components/search'
 
 const movies = {
   sintelTrailer: 'http://media.w3.org/2010/05/sintel/trailer.mp4',
@@ -12,19 +11,11 @@ const movies = {
   deadpool: 'https://www.youtube.com/watch?v=ONHBaC-pfsk',
 };
 
-// const media: IMedia<IVideoPrediction> = {
-//   title: 'Deadpool One',
-//   sourceUrl: 'https://www.youtube.com/watch?v=ONHBaC-pfsk',
-//   predictions: [{classifier: 'gun', confidence: 1, xStart: 300, yStart: 300, xEnd: 350, yEnd: 350, time: 4},
-//                 {classifier: 'sex', confidence: 1, xStart: 100, yStart: 100, xEnd: 20, yEnd: 20, time: 10},
-//                 {classifier: 'deadpool', confidence: 1, xStart: 300, yStart: 300, xEnd: 30, yEnd: 30, time: 12}
-//   ],
-// }
 
-const mediaTwo: IMedia<IVideoPrediction> = {
+const deadpool: IMedia<IVideoPrediction> = {
   title: 'Deadpool 2',
   sourceUrl: 'https://www.youtube.com/watch?v=D86RtevtfrA',
-  predictions: [{classifier: 'gun', confidence: 1, xStart: 0, yStart: 0, xEnd: 100, yEnd: 100, time: 4},
+  predictions: [{classifier: 'gun', confidence: 1, xStart: 0, yStart: 0, xEnd: 100, yEnd: 100, time: 3, },
                 {classifier: 'sex', confidence: 1, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 10},
                 {classifier: 'deadpool', confidence: 1, xStart: 200, yStart: 200, xEnd: 300, yEnd: 300, time: 12}
               ],
@@ -61,19 +52,15 @@ interface IAudioPrediction extends IPrediction {
 class App extends React.Component { 
   constructor(props: any) {
     super(props);
-
-    this.handleHeightChange = this.handleHeightChange.bind(this);
-    this.handleHeightSubmit = this.handleHeightSubmit.bind(this);
-    this.handleWidthChange = this.handleWidthChange.bind(this);
-    this.handleWidthSubmit = this.handleWidthSubmit.bind(this);
   }
 
+  private player!:ReactPlayer;
 
   state: { media:IMedia<IVideoPrediction>,
           played:number, loaded:number, playing: boolean, url:string, 
           volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
           playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, startbbx: number,
-          startbby: number, categories: Array<string>, color: string,  mediamap : {[key:number]:string} } = {
+          startbby: number, categories: Array<string>, mediamap : {[key:number]:string} } = {
 
       played: 0,
       loaded: 0,
@@ -90,10 +77,9 @@ class App extends React.Component {
       isDragging: false,
       startbbx: 10,
       startbby: 10,
-      categories: mediaTwo.predictions.map(a => a.classifier), 
-      color: '',
+      categories: deadpool.predictions.map(a => a.classifier), 
       
-      media: mediaTwo,
+      media: deadpool,
       // media: {
       //   title: '',
       //   sourceUrl: '',
@@ -105,46 +91,14 @@ class App extends React.Component {
 
 
   componentDidMount() {
-    console.log("HELLO Mel!");
-   // this.updateCanvas();
-
-    // if(mediaTwo.predictions[0].classifier==='gun') { console.log('heyo'); }
-
-    // var i;
-    // var counter = 0;
-    // for(i = 0; i < mediaTwo.predictions.length; i++) {
-    //   counter ++;
-    //   console.log("current count: " + counter)
-
-    //   if(media.predictions[i].classifier === 'deadpool') {
-    //     this.state.color = 'red'
-    //   }
-    //   if(media.predictions[i].classifier === 'gun') {
-    //     this.state.color = 'black'
-    //   }
-    //   if(media.predictions[i].classifier === 'sex') {
-    //    //change to setstate
-    //     this.state.color = 'pink'
-    //   }
-    //   console.log(this.state.color);
-    // }
-    
-
-   
-    
   }
   
   componentDidUpdate() {
-  //  this.updateCanvas();
-  
   }
-  playPause () {
-    if (this.state.playing == true) {
-      this.setState({ playing: false })
-    }
-    else {
-      this.setState({ playing: true })
-    }
+
+  playPause = () => {
+    console.log('play/pause')
+    this.setState({ playing: !this.state.playing })
   }
   onPlay = () => {
     console.log('onPlay')
@@ -155,6 +109,50 @@ class App extends React.Component {
     this.setState({ playing: false })
   }
 
+  changeCurrentTime = (e: number) => {
+    console.log("clicked ")
+    const currTime = this.state.playedSeconds;
+    // const newTime = currTime + e; 
+    // //this.setState({playedSeconds: newTime})
+    // this.setState({played: newTime})
+    // //console.log(this.refs.ReactPlayer)
+    
+  }
+
+  OnSeek = (e: number) => {
+    console.log("seeeeeking")
+    this.player.seekTo(e);
+  }
+  
+  onSeekMouseDown = (e:any) => {
+    this.setState({ seeking: true })
+  }
+  onSeekChange = (e:any) => {
+    this.setState({ played: parseFloat(e.target.value) })
+  }
+  onSeekMouseUp = (e:any) => {
+    this.setState({ seeking: false })
+    this.player.seekTo(parseFloat(e.target.value))
+  }
+  onProgress = (state : {playedSeconds: number , loadedSeconds: number, played: number}) => {
+    console.log('onProgress ', state)
+    // console.log("secs: " + state.playedSeconds);    
+    this.setState({loadedSeconds: state.loadedSeconds}); 
+    this.setState({playedSeconds: state.playedSeconds});
+    var roundedPlayedSec = Math.round(this.state.playedSeconds);
+  }
+
+//attempting to display bounding box based on time given on tag
+    // var i;
+    // for(i = 0; i < this.state.media.predictions.length; i++) {
+    //   if (this.state.media.predictions[i].time === roundedPlayedSec)
+    //   {
+    //     console.log("boop!")
+    //     this.setState({correctTime: true})
+    //   }
+
+    // }
+
   setPlaybackRate = (e: number) => {
     console.log(e)
     this.state.playbackRate = e;
@@ -163,7 +161,7 @@ class App extends React.Component {
   createMapofTagsForMovie = () => {
     console.log('createMapOfTagsForMovie')
     //The value might need to be Array<string> if we can have more than one classifier at a particular time of the video
-    mediaTwo.predictions.map(a=> this.state.mediamap[a.time]=a.classifier)
+    deadpool.predictions.map(a=> this.state.mediamap[a.time]=a.classifier)
     
     console.log(this.state.mediamap[4])
     console.log(this.state.mediamap[10])
@@ -176,13 +174,6 @@ class App extends React.Component {
     this.createMapofTagsForMovie()
   }
 
-
-  onProgress = (state : {playedSeconds: number , loadedSeconds: number, played: number}) => {
-      console.log('onProgress ', state)
-      // console.log("secs: " + state.playedSeconds);    
-      this.setState({loadedSeconds: state.loadedSeconds}); 
-      this.setState({playedSeconds: state.playedSeconds});
-    }
 
   boundingBoxClicked() {
     console.log("video clicked")
@@ -217,12 +208,12 @@ class App extends React.Component {
   handleTransform = () => {
     console.log("transforming.....");
   }
-
   onSearch = (event: any) => {
     console.log("searching tags....")
+  }
 
-    //console.log(deadpoolTwoObject.predictions[0]);
-
+  ref = (player : any) => {
+    this.player = player
   }
 
   render() {
@@ -244,10 +235,14 @@ class App extends React.Component {
                   volume = {volume}
                   playbackRate = {playbackRate}
                   onProgress = {this.onProgress}
+                  onSeek={e => console.log('onSeek', e)}
+                  onStart={() => console.log('onStart')}
+
+
               />
               <Stage width={640} height={360} className="konvastage">
                 <Layer>
-                  {
+                  { 
                     this.state.media.predictions.map((prediction) => {return <Rect
                       x= {prediction.xStart}
                       y= {prediction.yStart}
@@ -257,11 +252,12 @@ class App extends React.Component {
                       name="myRect"
                       fill={this.state.isDragging ? 'red' : 'transparent'}
                       stroke="black"
-
                       //stroke = prediction.classifier
                       onDragStart={() => {  
                         this.setState({ isDragging: true });
-                        console.log("Dragging started! of Rec1");
+                        console.log("Dragging started!");
+                        console.log("Time: " + prediction.time);
+                        console.log("Confidence: " + prediction.confidence);
                       }}
                       onDragEnd={() => { this.setState({ isDragging: false });
                         console.log("Done dragging!");
@@ -271,12 +267,10 @@ class App extends React.Component {
                       onTransformStart={() => {
                         console.log("oh hai")
                       }}
-                      />})
-                    
+                      />})    
                   }
                 </Layer>
               </Stage>
-              {/* <canvas id="canvas" ref="myCanvas" width="640" height="360" onClick={this.boundingBoxClicked}></canvas> */}        
             </div>
           </div>  
           <h2>Settings</h2>
@@ -285,9 +279,7 @@ class App extends React.Component {
               <tr>
                 <th>Controls</th>
                 <td>
-                  <button onClick={this.playPause}> Play Pause Button</button>
-                  <button onClick={this.onPause}> Pause</button>
-                  <button onClick={this.onPlay}> Play</button>
+                  <button onClick={this.playPause}> Play/Pause</button>
                 </td>
               </tr>
               <tr>
@@ -308,9 +300,25 @@ class App extends React.Component {
                   {this.state.categories}
                 </td>
               </tr>
+              <tr>
+                <th>Skip</th>
+                 
+                <td>
+                  <button onClick={() => this.OnSeek(-1)}>Previous Frame</button>
+                  <button onClick={() => this.OnSeek(1)}>Next Frame</button>
+                  <button onClick={() => this.OnSeek(.5)}>test Frame</button>
+                  <input
+                  type='range' min={0} max={1} step='any'
+                  value={played}
+                  onMouseDown={this.onSeekMouseDown}
+                  onChange={this.onSeekChange}
+                  onMouseUp={this.onSeekMouseUp}
+                />
+                </td>
+              </tr>
             </tbody>
           </table>
-
+         
           <h2>State</h2>
           <table id="time">
             <tbody>
@@ -324,47 +332,6 @@ class App extends React.Component {
               </tr>
             </tbody>
           </table>
-          <h2>Tags</h2>
-          <table id="tags">
-            <tbody>
-              <tr>
-                <th>Box Width: </th>
-                <td> {this.state.boxWidth} </td>
-              </tr>
-              <tr>
-                <th>Modify:</th>
-                <td>
-                 <form onSubmit={this.handleWidthSubmit}>
-                    <input 
-                      name="newwidth" 
-                      ref="newwidth"
-                      type="text" 
-                      value={this.state.boxWidth} 
-                      onChange={this.handleWidthChange}/>
-                  <input type="submit" value="Change!"></input>
-                </form>
-                </td>
-              </tr>
-              <tr>
-                <th>Box Height: </th>
-                <td> {this.state.boxHeight} </td>
-              </tr>
-              <tr>
-                <th>Modify:</th>
-                <td>
-                 <form onSubmit={this.handleHeightSubmit}>
-                    <input 
-                      name="newheight" 
-                      ref="newheight"
-                      type="text" 
-                      value={this.state.boxHeight} 
-                      onChange={this.handleHeightChange}/>
-                  <input type="submit" value="Change!"></input>
-                </form>
-                </td>
-              </tr>
-            </tbody>
-          </table>        
           </section>
           <section className='section'>
           <h2>Movies</h2>
@@ -396,6 +363,19 @@ class App extends React.Component {
                 </tr>
               </tbody>
             </table>
+          </section>
+          <section>
+          <div  id="tagtable">
+          <h2>Tags</h2>
+              <table >
+                <tbody>
+                    <tr>
+
+                    </tr>
+                </tbody>
+            </table>
+          </div>
+            
           </section>
       </div>
     ) 
