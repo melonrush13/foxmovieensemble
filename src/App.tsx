@@ -73,7 +73,7 @@ class App extends React.Component {
           played:number, loaded:number, playing: boolean, url:string, 
           volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
           playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, startbbx: number,
-          startbby: number, categories: Array<string>, color: string } = {
+          startbby: number, categories: Array<string>, color: string,  mediamap : {[key:number]:string} } = {
 
       played: 0,
       loaded: 0,
@@ -99,7 +99,7 @@ class App extends React.Component {
       //   sourceUrl: '',
       //   predictions:[],
       // }
-
+      mediamap: {},
       
   } 
 
@@ -160,12 +160,23 @@ class App extends React.Component {
     this.state.playbackRate = e;
     this.setState({ playingbackRate: e })
   }
+  createMapofTagsForMovie = () => {
+    console.log('createMapOfTagsForMovie')
+    //The value might need to be Array<string> if we can have more than one classifier at a particular time of the video
+    mediaTwo.predictions.map(a=> this.state.mediamap[a.time]=a.classifier)
+    
+    console.log(this.state.mediamap[4])
+    console.log(this.state.mediamap[10])
+    console.log(this.state.mediamap[12])
+  }
   setMovieUrl = (r: string ) => {
     console.log(r)
     this.state.url = r;
     this.setState({ url: r })
+    this.createMapofTagsForMovie()
   }
-  
+
+
   onProgress = (state : {playedSeconds: number , loadedSeconds: number, played: number}) => {
       console.log('onProgress ', state)
       // console.log("secs: " + state.playedSeconds);    
