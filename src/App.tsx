@@ -59,8 +59,8 @@ class App extends React.Component {
   state: { media:IMedia<IVideoPrediction>,
           played:number, loaded:number, playing: boolean, url:string, 
           volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
-          playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, startbbx: number,
-          startbby: number, categories: Array<string>, mediamap : {[key:number]:string} } = {
+          playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, categories: Array<string>, 
+          mediamap : {[key:number]:string}, mediaMapTwo : {[key:number]:string} } = {
 
       played: 0,
       loaded: 0,
@@ -75,23 +75,25 @@ class App extends React.Component {
       boxHeight: 100,
       boxWidth: 100,
       isDragging: false,
-      startbbx: 10,
-      startbby: 10,
-      categories: deadpool.predictions.map(a => a.classifier), 
+      categories: deadpool.predictions.map(a => a.classifier),
+ 
       
       media: deadpool,
-      // media: {
-      //   title: '',
-      //   sourceUrl: '',
-      //   predictions:[],
-      // }
+     
       mediamap: {},
-      
+      mediaMapTwo: {},
   } 
 
 
   componentDidMount() {
+    this.createMapofTagsForMovie()
+
+  console.log("test " + deadpool.predictions.map(a=> this.state.mediaMapTwo[a.yEnd]=a.classifier))
+
+   // deadpool.predictions.map(a=> this.state.mediamap[a.time]=a.classifier)
+
   }
+
   
   componentDidUpdate() {
   }
@@ -162,7 +164,6 @@ class App extends React.Component {
     console.log('createMapOfTagsForMovie')
     //The value might need to be Array<string> if we can have more than one classifier at a particular time of the video
     deadpool.predictions.map(a=> this.state.mediamap[a.time]=a.classifier)
-    
     console.log(this.state.mediamap[4])
     console.log(this.state.mediamap[10])
     console.log(this.state.mediamap[12])
@@ -179,38 +180,16 @@ class App extends React.Component {
     console.log("video clicked")
 
   }
-  updateCanvas() {
-    var canvas : any = this.refs.myCanvas
-    const ctx = canvas.getContext("2d")
-    ctx.fillStyle = "red";
-    ctx.fillRect(0, 0, this.state.boxWidth, this.state.boxHeight);
 
-    //console.log("height " + this.state.boxHeight)
-    //  console.log("width " + this.state.boxWidth)
-  }
  
-  handleWidthSubmit(event: any) {
-    alert('New change to bounding box width of: ' + this.state.boxWidth);
-    event.preventDefault();
-  }
-  handleWidthChange = (event : any) => {
-    this.setState({ boxWidth: event.target.value });
-  }
 
-  handleHeightSubmit(event: any) {
-    alert('New change to bounding box height of: ' + this.state.boxHeight);
-    event.preventDefault();
-  }
-  handleHeightChange = (event : any) => {
-    this.setState({ boxHeight: event.target.value});
-  }
 
   handleTransform = () => {
     console.log("transforming.....");
   }
-  onSearch = (event: any) => {
-    console.log("searching tags....")
-  }
+  // onSearch = (event: any) => {
+  //   console.log("searching tags....")
+  // }
 
   ref = (player : any) => {
     this.player = player
@@ -260,9 +239,7 @@ class App extends React.Component {
                         console.log("Confidence: " + prediction.confidence);
                       }}
                       onDragEnd={() => { this.setState({ isDragging: false });
-                        console.log("Done dragging!");
-                        console.log("new x and y :" + this.state.startbbx, this.state.startbby)
-                        
+                        console.log("Done dragging!");                          
                       }}
                       onTransformStart={() => {
                         console.log("oh hai")
@@ -290,16 +267,18 @@ class App extends React.Component {
                   <button onClick={() => this.setPlaybackRate(2)}>2</button>
                 </td>
               </tr>
+              {/* 
               <tr>
                 <th>Search</th>
                 <td>
-                  <input type="text" onChange={this.onSearch} placeholder="Search by classifier.." />
+                  <input type="text" onChange={this.onSearch} placeholder="Search by classifier.." /> 
                   
                 </td>
                 <td>
                   {this.state.categories}
                 </td>
               </tr>
+              */}
               <tr>
                 <th>Skip</th>
                  
@@ -365,17 +344,27 @@ class App extends React.Component {
             </table>
           </section>
           <section>
-          <div  id="tagtable">
-          <h2>Tags</h2>
-              <table >
-                <tbody>
-                    <tr>
-
-                    </tr>
-                </tbody>
+          <div id="tagtable">
+            <h2>Tags</h2>
+            <table >
+              <tbody>
+                <tr>
+                  <th>{this.state.categories[0]}</th>  
+                  <td>a</td>
+                </tr>
+                <tr>
+                  <th>{this.state.categories[1]}</th>  
+                  {/*We include the entire listItems array inside a <ul> element, and render it to the DOM*/}
+                  <ul></ul>
+                </tr>
+                <tr>
+                  <th>{this.state.categories[2]}</th> 
+                  <td>a</td>
+                  <td>{this.state.mediamap[10]}</td>
+                </tr>
+              </tbody>
             </table>
           </div>
-            
           </section>
       </div>
     ) 
