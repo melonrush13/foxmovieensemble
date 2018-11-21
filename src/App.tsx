@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import './App.css';
 import ReactPlayer from 'react-player'
 import {Stage, Layer, Rect, Transformer } from 'react-konva'
+import { string } from 'prop-types';
 
 
 const movies = {
@@ -60,7 +61,7 @@ class App extends React.Component {
           played:number, loaded:number, playing: boolean, url:string, 
           volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
           playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, startbbx: number,
-          startbby: number, categories: Array<string>, mediamap : {[key:number]:string} } = {
+          startbby: number, categories: Array<string>, color: string,  mediamap : {[key:number]:IVideoPrediction} } = {
 
       played: 0,
       loaded: 0,
@@ -161,11 +162,11 @@ class App extends React.Component {
   createMapofTagsForMovie = () => {
     console.log('createMapOfTagsForMovie')
     //The value might need to be Array<string> if we can have more than one classifier at a particular time of the video
-    deadpool.predictions.map(a=> this.state.mediamap[a.time]=a.classifier)
-    
-    console.log(this.state.mediamap[4])
-    console.log(this.state.mediamap[10])
-    console.log(this.state.mediamap[12])
+    mediaTwo.predictions.map(a=> this.state.mediamap[a.time]=a)
+    deadpool.predictions.map(a=> this.state.mediamap[a.time]=a.classifier)    
+    console.log(this.state.mediamap[4].classifier)
+    console.log(this.state.mediamap[10].classifier)
+    console.log(this.state.mediamap[12].classifier)
   }
   setMovieUrl = (r: string ) => {
     console.log(r)
@@ -175,6 +176,24 @@ class App extends React.Component {
   }
 
 
+  onProgress = (state : {playedSeconds: number , loadedSeconds: number, played: number,curr_classifier : string,curr_xstart : number,curr_xend : number,curr_ystart : number,curr_yend : number}) => {
+      console.log('onProgress ', state)
+      // console.log("secs: " + state.playedSeconds);    
+      this.setState({loadedSeconds: state.loadedSeconds}); 
+      this.setState({playedSeconds: state.playedSeconds});
+
+      //Get classifier active for this second
+      this.setState({curr_classifier:this.state.mediamap[state.playedSeconds].classifier});
+      //TODO: Highlight this classifier with a different color
+
+      //Get x and y co-ordinates for this second
+      this.setState({curr_xstart:this.state.mediamap[state.playedSeconds].xStart});
+      this.setState({curr_xend:this.state.mediamap[state.playedSeconds].xEnd});
+      this.setState({curr_ystart:this.state.mediamap[state.playedSeconds].yStart});
+      this.setState({curr_yend:this.state.mediamap[state.playedSeconds].yEnd});
+      //TODO: Draw the bounding box for this coordinates at this second
+
+    }
   boundingBoxClicked() {
     console.log("video clicked")
 
