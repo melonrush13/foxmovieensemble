@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import * as ReactDOM from 'react-dom';
 import './App.css';
 import ReactPlayer from 'react-player'
 import {Stage, Layer, Rect, Transformer } from 'react-konva'
@@ -6,8 +7,8 @@ import {Stage, Layer, Rect, Transformer } from 'react-konva'
 
 const movies = {
   sintelTrailer: 'http://media.w3.org/2010/05/sintel/trailer.mp4',
-  bunnyTrailer: 'http://media.w3.org/2010/05/bunny/trailer.mp4',
-  bunnyMovie: 'http://media.w3.org/2010/05/bunny/movie.mp4',
+//  bunnyTrailer: 'http://media.w3.org/2010/05/bunny/trailer.mp4',
+ // bunnyMovie: 'http://media.w3.org/2010/05/bunny/movie.mp4',
   deadpool: 'https://www.youtube.com/watch?v=ONHBaC-pfsk',
 };
 
@@ -15,8 +16,10 @@ const movies = {
 const deadpool: IMedia<IVideoPrediction> = {
   title: 'Deadpool 2',
   sourceUrl: 'https://www.youtube.com/watch?v=D86RtevtfrA',
-  predictions: [{classifier: 'gun', confidence: 1, xStart: 0, yStart: 0, xEnd: 100, yEnd: 100, time: 3, },
-                {classifier: 'sex', confidence: 1, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 10},
+  predictions: [{classifier: 'violence', confidence: 1, xStart: 0, yStart: 0, xEnd: 100, yEnd: 100, time: 3, },
+                {classifier: 'violence', confidence: 1, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 7, },
+                {classifier: 'violence', confidence: 1, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 15, },
+                {classifier: 'nudity', confidence: 1, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 10},
                 {classifier: 'deadpool', confidence: 1, xStart: 200, yStart: 200, xEnd: 300, yEnd: 300, time: 12}
               ],
 }
@@ -48,6 +51,10 @@ interface IAudioPrediction extends IPrediction {
   duration: number // duration in ms
 }
 
+interface IntrinsicElements {
+  foo: any
+}
+
 
 class App extends React.Component { 
   constructor(props: any) {
@@ -60,7 +67,7 @@ class App extends React.Component {
           played:number, loaded:number, playing: boolean, url:string, 
           volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
           playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, categories: Array<string>, 
-          mediamap : {[key:number]:IVideoPrediction} } = {
+          mediamap : {[key:number]:IVideoPrediction}} = {
 
       played: 0,
       loaded: 0,
@@ -83,11 +90,21 @@ class App extends React.Component {
 
 
   componentDidMount() {
+   
   }
 
-  
   componentDidUpdate() {
   }
+
+
+  newArray() {
+    //creates a new array of no duplicates 
+    var unique = this.state.categories.filter(function(elem, index, self) {
+      return index === self.indexOf(elem);
+    })
+    console.log("Categories without Duplicates: " + unique);
+  }
+
 
   playPause = () => {
     console.log('play/pause')
@@ -128,7 +145,7 @@ class App extends React.Component {
     this.player.seekTo(parseFloat(e.target.value))
   }
 
-  onProgress = (state : {playedSeconds: number , loadedSeconds: number, played: number,curr_classifier : string,curr_xstart : number,curr_xend : number,curr_ystart : number,curr_yend : number}) => {
+  onProgress = (state : {playedSeconds: number , loadedSeconds: number, played: number}) => {
     console.log('onProgress ', state)
     // console.log("secs: " + state.playedSeconds);    
     this.setState({loadedSeconds: state.loadedSeconds}); 
@@ -202,8 +219,18 @@ class App extends React.Component {
 
   render() {
     const { url, playing, volume, loaded, duration, playbackRate, played } = this.state
-    
-    return (
+
+    // var unique = this.state.categories.filter(function(elem, index, self) {
+    //   return index === self.indexOf(elem);
+    // })
+    // unique.forEach(function(element) {
+    //   console.log("array: " + element);
+
+    // });
+
+
+    return (                
+
       <div className ='app'>
         <section className='videoPlayer'>
           <div id="title">
@@ -302,7 +329,6 @@ class App extends React.Component {
               </tr>
             </tbody>
           </table>
-         
           <h2>State</h2>
           <table id="time">
             <tbody>
@@ -328,18 +354,6 @@ class App extends React.Component {
                   </td>
                 </tr>
                 <tr>
-                  <th>Bunny Movie Trailer</th>
-                  <td>
-                    <button onClick={() => this.setMovieUrl(movies.bunnyTrailer)}>Play</button>
-                  </td>
-                </tr>
-                <tr>
-                  <th>Bunny Movie</th>
-                  <td>
-                    <button onClick={() => this.setMovieUrl(movies.bunnyMovie)}>Play </button>
-                  </td>
-                </tr>
-                <tr>
                   <th>Deadpool Trailer</th>
                   <td>
                     <button onClick={() => this.setMovieUrl(movies.deadpool)}>Play</button>
@@ -351,20 +365,18 @@ class App extends React.Component {
           <section>
           <div id="tagtable">
             <h2>Tags</h2>
+            <div> {this.newArray()}</div>
             <table >
               <tbody>
                 <tr>
-                  <th>{this.state.categories[0]}</th>  
-                  <td>a</td>
-                </tr>
-                <tr>
-                  <th>{this.state.categories[1]}</th>  
-                  {/*We include the entire listItems array inside a <ul> element, and render it to the DOM*/}
+                  {/*We include the entire listItems array inside a <ul> element, and render it to the DOM
+                  <th>{unique}</th> 
+                  */}
                   <ul></ul>
                 </tr>
                 <tr>
                   <th>{this.state.categories[2]}</th> 
-                  <td>a</td>
+                  <td>Test Data Point One</td>
                   <td>{this.state.mediamap[10]}</td>
                 </tr>
               </tbody>
@@ -375,5 +387,6 @@ class App extends React.Component {
     ) 
   }
 }
+
 
 export default App;
