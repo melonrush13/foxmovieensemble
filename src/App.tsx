@@ -17,10 +17,11 @@ const deadpool: IMedia<IVideoPrediction> = {
   title: 'Deadpool 2',
   sourceUrl: 'https://www.youtube.com/watch?v=D86RtevtfrA',
   predictions: [{classifier: 'violence', confidence: 1, xStart: 0, yStart: 0, xEnd: 100, yEnd: 100, time: 3, },
-                {classifier: 'violence', confidence: 1, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 7, },
-                {classifier: 'violence', confidence: 1, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 15, },
-                {classifier: 'nudity', confidence: 1, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 10},
-                {classifier: 'deadpool', confidence: 1, xStart: 200, yStart: 200, xEnd: 300, yEnd: 300, time: 12}
+                {classifier: 'violence', confidence: 2, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 7, },
+                {classifier: 'violence', confidence: 3, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 15, },
+                {classifier: 'nudity', confidence: 4, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 10},
+                {classifier: 'deadpool', confidence: 5, xStart: 200, yStart: 200, xEnd: 300, yEnd: 300, time: 12},
+                {classifier: 'deadpool', confidence: 6, xStart: 200, yStart: 200, xEnd: 300, yEnd: 300, time: 14}
               ],
 }
 
@@ -51,11 +52,6 @@ interface IAudioPrediction extends IPrediction {
   duration: number // duration in ms
 }
 
-interface IntrinsicElements {
-  foo: any
-}
-
-
 class App extends React.Component { 
   constructor(props: any) {
     super(props);
@@ -85,24 +81,35 @@ class App extends React.Component {
       categories: deadpool.predictions.map(a => a.classifier),
       media: deadpool,
       mediamap: {},
-
   } 
 
 
   componentDidMount() {
-   
   }
-
   componentDidUpdate() {
   }
 
-
-  newArray() {
-    //creates a new array of no duplicates 
-    var unique = this.state.categories.filter(function(elem, index, self) {
-      return index === self.indexOf(elem);
+  uniqueValues() {
+    var unique = this.state.categories.filter(function(value, index, self) {
+      return self.indexOf(value) === index;
     })
-    console.log("Categories without Duplicates: " + unique);
+
+    console.log("unique array: " + unique);
+    let i=0;
+    let j=0;
+    let data;
+    for (i=0; i<unique.length; i++) {
+      console.log("category " + unique[i])
+      for (j=0; j < deadpool.predictions.length; j++ ) {
+          console.log("confidence " + deadpool.predictions[j].confidence);
+          if(deadpool.predictions[j].classifier === unique[i]) {
+            console.log("these are the same: " + deadpool.predictions[j].classifier + " and " + unique[i])
+            data = deadpool.predictions[j];
+            console.log("classifier: " + data.classifier + ", confidence: " + data.confidence + ", time: " + data.time)
+            return data.time;
+          }
+      }
+    } 
   }
 
 
@@ -181,7 +188,6 @@ class App extends React.Component {
     console.log('createMapOfTagsForMovie')
     //The value might need to be Array<string> if we can have more than one classifier at a particular time of the video
     deadpool.predictions.map(a=> this.state.mediamap[a.time]=a)
-    
     console.log(this.state.mediamap[4])
     console.log(this.state.mediamap[10])
     console.log(this.state.mediamap[12])
@@ -220,14 +226,26 @@ class App extends React.Component {
   render() {
     const { url, playing, volume, loaded, duration, playbackRate, played } = this.state
 
-    // var unique = this.state.categories.filter(function(elem, index, self) {
-    //   return index === self.indexOf(elem);
-    // })
-    // unique.forEach(function(element) {
-    //   console.log("array: " + element);
 
-    // });
+    var unique = this.state.categories.filter(function(value, index, self) {
+      return self.indexOf(value) === index;
+    })
 
+    console.log("unique array: " + unique);
+    let i=0;
+    let j=0;
+    let data;
+    for (i=0; i<unique.length; i++) {
+      console.log("category " + unique[i])
+      for (j=0; j < deadpool.predictions.length; j++ ) {
+          console.log("confidence " + deadpool.predictions[j].confidence);
+          if(deadpool.predictions[j].classifier === unique[i]) {
+            console.log("these are the same: " + deadpool.predictions[j].classifier + " and " + unique[i])
+            data = deadpool.predictions[j];
+            console.log("classifier: " + data.classifier + ", confidence: " + data.confidence + ", time: " + data.time)
+          }
+      }
+    } 
 
     return (                
 
@@ -365,19 +383,21 @@ class App extends React.Component {
           <section>
           <div id="tagtable">
             <h2>Tags</h2>
-            <div> {this.newArray()}</div>
+           {/* <div> {this.uniqueValues()}</div>*/}
             <table >
               <tbody>
                 <tr>
-                  {/*We include the entire listItems array inside a <ul> element, and render it to the DOM
-                  <th>{unique}</th> 
-                  */}
-                  <ul></ul>
+                  <th>{unique[0]}</th> 
+                  <td></td>
+                  
                 </tr>
                 <tr>
-                  <th>{this.state.categories[2]}</th> 
-                  <td>Test Data Point One</td>
-                  <td>{this.state.mediamap[10]}</td>
+                    <th>{unique[1]}</th>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>{unique[2]}</th>
+                    <td></td>
                 </tr>
               </tbody>
             </table>
