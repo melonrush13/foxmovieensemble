@@ -65,7 +65,7 @@ class App extends React.Component {
           played:number, loaded:number, playing: boolean, url:string, 
           volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
           playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, categories: Array<string>, 
-          mediamap : {[key:number]:IVideoPrediction}, displayBox: boolean} = {
+          mediamap : {[key:number]:IVideoPrediction}, displayBox: boolean, color: string, time: number} = {
 
       played: 0,
       loaded: 0,
@@ -84,11 +84,15 @@ class App extends React.Component {
       media: deadpool,
       mediamap: {},
       displayBox: false,
+      color: '',
+      time: 0,
   } 
 
 
   componentDidMount() {
-   //this.createMapofTagsForMovie()
+    this.createMapofTagsForMovie()
+    
+
 
   }
   componentDidUpdate() {
@@ -130,39 +134,42 @@ class App extends React.Component {
   }
 
   onProgress = (state : {playedSeconds: number , loadedSeconds: number, played: number}) => {
-    console.log('onProgress ', state)
+    //console.log('onProgress ', state)
     // console.log("secs: " + state.playedSeconds);    
-    this.setState({loadedSeconds: state.loadedSeconds}); 
-    this.setState({playedSeconds: state.playedSeconds});
+    var roundedPlayedSec = Math.round(this.state.playedSeconds)
+
+    this.setState({loadedSeconds: state.loadedSeconds, playedSeconds: state.playedSeconds, time: roundedPlayedSec})
 
     //displays the correct bounding box based on time
     var i;
     var finishTime;
-    var roundedPlayedSec = Math.round(this.state.playedSeconds)
-
-    var currentPrediction = this.state.mediamap[roundedPlayedSec];
-    {
-     //console.log(currentPrediction.classifier);
-      //console.log(currentPrediction.confidence);
-      //console.log(currentPrediction.time);
-    }
-    //check if current prediction is null
-    //if not, print out the currentprediction on the side (classifier, and current xtart, ystart, and show that specific bounding )
-
+    var currentPrediction;
     for (i=0; i < deadpool.predictions.length; i++) {
       finishTime = deadpool.predictions[i].time + 2;
       if (deadpool.predictions[i].time === roundedPlayedSec) {
         this.setState({displayBox: true})
         console.log("can display bounding box " + deadpool.predictions[i].confidence + "? = " + this.state.displayBox)
-
+        console.log(this.state.mediamap[roundedPlayedSec]);
       }
-      //todo: have box fade in a second before and after
       if(finishTime === roundedPlayedSec) {
         this.setState({displayBox: false})
         console.log("End display of box " + deadpool.predictions[i].confidence)
       }
-
     }
+
+
+
+    //check if current prediction is null
+    //if not, print out the currentprediction on the side (classifier, and current xtart, ystart, and show that specific bounding )
+    // currentPrediction = this.state.mediamap[roundedPlayedSec];
+    // {
+    //  console.log(currentPrediction.classifier);
+    //   //console.log(currentPrediction.confidence);
+    //   //console.log(currentPrediction.time);
+    // }
+
+    
+
    }
 
     
@@ -243,7 +250,7 @@ class App extends React.Component {
                       height={prediction.yEnd - prediction.yStart} 
                       draggable 
                       name="myRect"
-                      visible={this.state.displayBox}
+                      visible={this.state.time === Math.round(prediction.time)}
                       fill={this.state.isDragging ? 'red' : 'transparent'}
                       stroke="black"
                       //stroke = prediction.classifier
@@ -334,33 +341,26 @@ class App extends React.Component {
           <section id="tags">
             <div>
               <h2 id="tagheader">Tags</h2>
-              {/*<div className={<data/>} > </div> */}
-              {/*<div> Hey!!!{this.uniqueValues()}</div>*/}
-              {/*<div> {mydata.filter(foo => true).map(data => <div key={data.someIdentifier}>{data.whatever}</div>)} </div>  */}            
               <table id="tagtable">
-                <tbody>
-                  <tr>
-                    <th className={unique[0]}>{unique[0]}</th> 
-                    <td>classifier: </td>
-                    <td>classification: </td>
-                    <td>time: </td>
-                  </tr>
-                  <tr>
-                    <th className={unique[1]}>{unique[1]}</th>
-                    <td>classifier: </td>
-                    <td>classification: </td>
-                    <td>time: </td>
-                  </tr>
-                  <tr>
-                    <th className={unique[2]}>{unique[2]}</th>
-                    <td>classifier: </td>
-                    <td>classification: </td>
-                    <td>time: </td>
-                  </tr>
-                  <tr>
-                    <th>Displaying:</th>
-                    <td>{this.state.displayBox}</td>
-                  </tr>
+              <thead>
+                <tr> 
+                  <th>Time</th>
+                  <th>Classifier</th>
+                  <th>Button</th>
+                </tr>
+              </thead>
+                <tbody> 
+                  {this.state.media.predictions.map((prediction) => {return <tr>
+                      <td>{prediction.time}</td>
+                      <td> {prediction.classifier} </td>
+                      <td>
+                        <button onClick={a => {
+                          this.setState({time: prediction.time})
+                          this.setState({})
+                      }}> View </button>
+                      </td>
+                    </tr>
+                  })}
                 </tbody>
               </table>
             </div>
