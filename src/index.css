@@ -26,7 +26,20 @@ h2 {
 
 .react-player {
   position: absolute;
-  z-index: -1;
+  z-index: -1;  
+}
+
+#videoplayer {
+  width : 50%;
+  float: left;
+  /*background-color: pink; */
+}
+
+#header {
+  background-color:transparent;
+}
+#footer {
+  background-color:transparent;
 }
 
 #videocontainer {
@@ -39,14 +52,6 @@ h2 {
   border:5px solid black; 
   border-radius: 10px; 
   box-shadow: 0 5px 50px #333
-}
-
-#player-wrapper {
-  background-color:purple;
-}
-
-#videoplayer {
-  float: left;
 }
 
 .konva-stage {
@@ -75,7 +80,7 @@ h2 {
 
 #tags {
   float: right;
-  margin-right: 300px;
+  width: 50%;
 }
 
 #tagtable {

@@ -429,6 +429,10 @@ class App extends React.Component {
               </table>
             </div>
           </section>
+          <section id="footer">
+            <div id="title">
+            </div>
+           </section>
       </div>
     ) 
   }
