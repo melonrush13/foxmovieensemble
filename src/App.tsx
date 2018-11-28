@@ -4,6 +4,7 @@ import './App.css';
 import ReactPlayer from 'react-player'
 import {Stage, Layer, Rect, Transformer } from 'react-konva'
 import { dragDistance } from 'konva';
+import { S_IFCHR } from 'constants';
 
 
 const movies = {
@@ -19,8 +20,8 @@ const deadpool: IMedia<IVideoPrediction> = {
   sourceUrl: 'https://www.youtube.com/watch?v=D86RtevtfrA',
   predictions: [{classifier: 'violence', confidence: 1, xStart: 0, yStart: 0, xEnd: 100, yEnd: 100, time: 3, },
                 {classifier: 'violence', confidence: 2, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 7, },
-                {classifier: 'violence', confidence: 3, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 15, },
                 {classifier: 'nudity', confidence: 4, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 10},
+                {classifier: 'violence', confidence: 3, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 15, },
                 {classifier: 'deadpool', confidence: 5, xStart: 200, yStart: 200, xEnd: 300, yEnd: 300, time: 12},
                 {classifier: 'deadpool', confidence: 6, xStart: 200, yStart: 200, xEnd: 300, yEnd: 300, time: 14}
               ],
@@ -64,7 +65,7 @@ class App extends React.Component {
           played:number, loaded:number, playing: boolean, url:string, 
           volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
           playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, categories: Array<string>, 
-          mediamap : {[key:number]:IVideoPrediction}} = {
+          mediamap : {[key:number]:IVideoPrediction}, displayBox: boolean} = {
 
       played: 0,
       loaded: 0,
@@ -82,54 +83,27 @@ class App extends React.Component {
       categories: deadpool.predictions.map(a => a.classifier),
       media: deadpool,
       mediamap: {},
+      displayBox: false,
   } 
 
 
   componentDidMount() {
+   //this.createMapofTagsForMovie()
+
   }
   componentDidUpdate() {
   }
 
-  uniqueValues() {
-    var unique = this.state.categories.filter(function(value, index, self) {
-      return self.indexOf(value) === index;
-    })
-
-    console.log("unique array: " + unique);
-    let i=0;
-    let j=0;
-    let data;
-    for (i=0; i<unique.length; i++) {
-      console.log("category " + unique[i])
-      for (j=0; j < deadpool.predictions.length; j++ ) {
-          console.log("confidence " + deadpool.predictions[j].confidence);
-          if(deadpool.predictions[j].classifier === unique[i]) {
-            console.log("these are the same: " + deadpool.predictions[j].classifier + " and " + unique[i])
-            data = deadpool.predictions[j];
-            console.log("classifier: " + data.classifier + ", confidence: " + data.confidence + ", time: " + data.time)
-           // return data.time;
-
-           
-          }
-          var testOne = <div>
-          mel
-        </div>
-      }
-    } 
-
-    return (
-      <div id="taggingcentral" className="tagcent">
-        <p>"Hello!"</p>
-      </div>
-    );
-  }
-
- 
-
   playPause = () => {
     console.log('play/pause')
     this.setState({ playing: !this.state.playing })
+
+    //plays a default movie if none is selected
+    if(this.state.url === '') {
+      this.setMovieUrl(movies.sintelTrailer)
+    }
   }
+
   onPlay = () => {
     console.log('onPlay')
     this.setState({ playing: true })
@@ -137,16 +111,6 @@ class App extends React.Component {
   onPause = () => {
     console.log('onPause')
     this.setState({ playing: false })
-  }
-
-  changeCurrentTime = (e: number) => {
-    console.log("clicked ")
-    const currTime = this.state.playedSeconds;
-    // const newTime = currTime + e; 
-    // //this.setState({playedSeconds: newTime})
-    // this.setState({played: newTime})
-    // //console.log(this.refs.ReactPlayer)
-    
   }
 
   OnSeek = (e: number) => {
@@ -170,27 +134,39 @@ class App extends React.Component {
     // console.log("secs: " + state.playedSeconds);    
     this.setState({loadedSeconds: state.loadedSeconds}); 
     this.setState({playedSeconds: state.playedSeconds});
-     //Get classifier active for this second
-    this.setState({curr_classifier:this.state.mediamap[state.playedSeconds].classifier});
-    //TODO: Highlight this classifier with a different color
-     //Get x and y co-ordinates for this second
-    this.setState({curr_xstart:this.state.mediamap[state.playedSeconds].xStart});
-    this.setState({curr_xend:this.state.mediamap[state.playedSeconds].xEnd});
-    this.setState({curr_ystart:this.state.mediamap[state.playedSeconds].yStart});
-    this.setState({curr_yend:this.state.mediamap[state.playedSeconds].yEnd});
-    //TODO: Draw the bounding box for this coordinates at this second
+
+    //displays the correct bounding box based on time
+    var i;
+    var finishTime;
+    var roundedPlayedSec = Math.round(this.state.playedSeconds)
+
+    var currentPrediction = this.state.mediamap[roundedPlayedSec];
+    {
+     //console.log(currentPrediction.classifier);
+      //console.log(currentPrediction.confidence);
+      //console.log(currentPrediction.time);
+    }
+    //check if current prediction is null
+    //if not, print out the currentprediction on the side (classifier, and current xtart, ystart, and show that specific bounding )
+
+    for (i=0; i < deadpool.predictions.length; i++) {
+      finishTime = deadpool.predictions[i].time + 2;
+      if (deadpool.predictions[i].time === roundedPlayedSec) {
+        this.setState({displayBox: true})
+        console.log("can display bounding box " + deadpool.predictions[i].confidence + "? = " + this.state.displayBox)
+
+      }
+      //todo: have box fade in a second before and after
+      if(finishTime === roundedPlayedSec) {
+        this.setState({displayBox: false})
+        console.log("End display of box " + deadpool.predictions[i].confidence)
+      }
+
+    }
    }
 
-//attempting to display bounding box based on time given on tag
-    // var i;
-    // for(i = 0; i < this.state.media.predictions.length; i++) {
-    //   if (this.state.media.predictions[i].time === roundedPlayedSec)
-    //   {
-    //     console.log("boop!")
-    //     this.setState({correctTime: true})
-    //   }
-
-    // }
+    
+ 
 
   setPlaybackRate = (e: number) => {
     console.log(e)
@@ -201,19 +177,14 @@ class App extends React.Component {
     console.log('createMapOfTagsForMovie')
     //The value might need to be Array<string> if we can have more than one classifier at a particular time of the video
     deadpool.predictions.map(a=> this.state.mediamap[a.time]=a)
-    console.log(this.state.mediamap[4])
-    console.log(this.state.mediamap[10])
-    console.log(this.state.mediamap[12])
-    console.log(this.state.mediamap[4].classifier)
-    console.log(this.state.mediamap[10].classifier)
-    console.log(this.state.mediamap[12].classifier)
+    console.log(this.state.mediamap[3])
   }
   
   setMovieUrl = (r: string ) => {
     console.log(r)
     this.state.url = r;
     this.setState({ url: r })
-    this.createMapofTagsForMovie()
+   //this.createMapofTagsForMovie()
   }
 
 
@@ -221,9 +192,6 @@ class App extends React.Component {
     console.log("video clicked")
 
   }
-
- 
-
 
   handleTransform = () => {
     console.log("transforming.....");
@@ -240,44 +208,7 @@ class App extends React.Component {
     var unique = this.state.categories.filter(function(value, index, self) {
       return self.indexOf(value) === index;
     })
-
-    //const test: JSX.Element | null = this.uniqueValues();
-
-    console.log("unique array: " + unique);
-    let i=0;
-    let j=0;
-    let data;
-    var uno;
-    var dos;
-    var tres;
-    for (i=0; i<unique.length; i++) {
-      console.log("category " + unique[i])
-      for (j=0; j < deadpool.predictions.length; j++ ) {
-          console.log("confidence " + deadpool.predictions[j].confidence);
-        if(deadpool.predictions[j].classifier === unique[i]) {
-          console.log("these are the same: " + deadpool.predictions[j].classifier + " and " + unique[i])
-          data = deadpool.predictions[j];
-          console.log("classifier: " + data.classifier + ", confidence: " + data.confidence + ", time: " + data.time);
-
-          //maybe add these to a new array........? (media map)
-         // [key: number] ivideoprediction
-
-          uno = deadpool.predictions[i].classifier;
-          dos = deadpool.predictions[i].confidence;
-          tres = deadpool.predictions[i].time;
-
-         // deadpool.predictions.map(a=> this.state.mediamap[a.time]=a.classifier)
-
-
-
-          var test = <div>
-            hello!
-          </div>
-        //deadpool.predictions.map(a => <span>{a.classifier}</span>)}
-        }
-      }
-    } 
-
+          
     return (                
 
       <div className ='app'>
@@ -312,6 +243,7 @@ class App extends React.Component {
                       height={prediction.yEnd - prediction.yStart} 
                       draggable 
                       name="myRect"
+                      visible={this.state.displayBox}
                       fill={this.state.isDragging ? 'red' : 'transparent'}
                       stroke="black"
                       //stroke = prediction.classifier
@@ -325,7 +257,6 @@ class App extends React.Component {
                         console.log("Done dragging!");                          
                       }}
                       onTransformStart={() => {
-                        console.log("oh hai")
                       }}
                       />})    
                   }
@@ -350,9 +281,9 @@ class App extends React.Component {
                   <button onClick={() => this.setPlaybackRate(2)}>2</button>
                 </td>
               </tr>
+              {/*
               <tr>
                 <th>Skip</th>
-                 
                 <td>
                   <button onClick={() => this.OnSeek(-1)}>Previous Frame</button>
                   <button onClick={() => this.OnSeek(1)}>Next Frame</button>
@@ -366,6 +297,7 @@ class App extends React.Component {
                 />
                 </td>
               </tr>
+              */}
             </tbody>
           </table>
           <h2>State</h2>
@@ -409,21 +341,25 @@ class App extends React.Component {
                 <tbody>
                   <tr>
                     <th className={unique[0]}>{unique[0]}</th> 
-                    <td>classifier: {uno}</td>
-                    <td>classification: {dos}</td>
-                    <td>time: {tres}</td>
+                    <td>classifier: </td>
+                    <td>classification: </td>
+                    <td>time: </td>
                   </tr>
                   <tr>
-                      <th className={unique[1]}>{unique[1]}</th>
-                      <td>classifier: {uno}</td>
-                      <td>classification: {dos}</td>
-                      <td>time: {tres}</td>
+                    <th className={unique[1]}>{unique[1]}</th>
+                    <td>classifier: </td>
+                    <td>classification: </td>
+                    <td>time: </td>
                   </tr>
                   <tr>
-                      <th className={unique[2]}>{unique[2]}</th>
-                      <td>classifier: {uno}</td>
-                      <td>classification: {dos}</td>
-                      <td>time: {tres}</td>
+                    <th className={unique[2]}>{unique[2]}</th>
+                    <td>classifier: </td>
+                    <td>classification: </td>
+                    <td>time: </td>
+                  </tr>
+                  <tr>
+                    <th>Displaying:</th>
+                    <td>{this.state.displayBox}</td>
                   </tr>
                 </tbody>
               </table>
@@ -434,9 +370,10 @@ class App extends React.Component {
             </div>
            </section>
       </div>
-    ) 
-  }
+      ) 
+   }
 }
+
 
 
 export default App;
