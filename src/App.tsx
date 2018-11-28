@@ -3,6 +3,7 @@ import * as ReactDOM from 'react-dom';
 import './App.css';
 import ReactPlayer from 'react-player'
 import {Stage, Layer, Rect, Transformer } from 'react-konva'
+import { dragDistance } from 'konva';
 
 
 const movies = {
@@ -106,12 +107,24 @@ class App extends React.Component {
             console.log("these are the same: " + deadpool.predictions[j].classifier + " and " + unique[i])
             data = deadpool.predictions[j];
             console.log("classifier: " + data.classifier + ", confidence: " + data.confidence + ", time: " + data.time)
-            return data.time;
+           // return data.time;
+
+           
           }
+          var testOne = <div>
+          mel
+        </div>
       }
     } 
+
+    return (
+      <div id="taggingcentral" className="tagcent">
+        <p>"Hello!"</p>
+      </div>
+    );
   }
 
+ 
 
   playPause = () => {
     console.log('play/pause')
@@ -219,9 +232,6 @@ class App extends React.Component {
   //   console.log("searching tags....")
   // }
 
-  ref = (player : any) => {
-    this.player = player
-  }
 
   render() {
     const { url, playing, volume, loaded, duration, playbackRate, played } = this.state
@@ -231,30 +241,53 @@ class App extends React.Component {
       return self.indexOf(value) === index;
     })
 
+    //const test: JSX.Element | null = this.uniqueValues();
+
     console.log("unique array: " + unique);
     let i=0;
     let j=0;
     let data;
+    var uno;
+    var dos;
+    var tres;
     for (i=0; i<unique.length; i++) {
       console.log("category " + unique[i])
       for (j=0; j < deadpool.predictions.length; j++ ) {
           console.log("confidence " + deadpool.predictions[j].confidence);
-          if(deadpool.predictions[j].classifier === unique[i]) {
-            console.log("these are the same: " + deadpool.predictions[j].classifier + " and " + unique[i])
-            data = deadpool.predictions[j];
-            console.log("classifier: " + data.classifier + ", confidence: " + data.confidence + ", time: " + data.time)
-          }
+        if(deadpool.predictions[j].classifier === unique[i]) {
+          console.log("these are the same: " + deadpool.predictions[j].classifier + " and " + unique[i])
+          data = deadpool.predictions[j];
+          console.log("classifier: " + data.classifier + ", confidence: " + data.confidence + ", time: " + data.time);
+
+          //maybe add these to a new array........? (media map)
+         // [key: number] ivideoprediction
+
+          uno = deadpool.predictions[i].classifier;
+          dos = deadpool.predictions[i].confidence;
+          tres = deadpool.predictions[i].time;
+
+         // deadpool.predictions.map(a=> this.state.mediamap[a.time]=a.classifier)
+
+
+
+          var test = <div>
+            hello!
+          </div>
+        //deadpool.predictions.map(a => <span>{a.classifier}</span>)}
+        }
       }
     } 
 
     return (                
 
       <div className ='app'>
-        <section className='videoPlayer'>
-          <div id="title">
-            <h1>Fox Movie Ensemble</h1>
-          </div>
-          <div className='player-wrapper'>
+      <section id="header">
+        <div id="title">
+          <h1>Fox Movie Ensemble</h1>
+        </div>
+      </section>
+        <section className='videoPlayer' id="videoplayer">
+          <div className='player-wrapper' id="player-wrapper">
             <div id="videocontainer">
             
               <ReactPlayer
@@ -300,7 +333,7 @@ class App extends React.Component {
               </Stage>
             </div>
           </div>  
-          <h2>Settings</h2>
+          <h2 id="settings">Settings</h2>
           <table id="controls">
             <tbody>
               <tr>
@@ -317,18 +350,6 @@ class App extends React.Component {
                   <button onClick={() => this.setPlaybackRate(2)}>2</button>
                 </td>
               </tr>
-              {/* 
-              <tr>
-                <th>Search</th>
-                <td>
-                  <input type="text" onChange={this.onSearch} placeholder="Search by classifier.." /> 
-                  
-                </td>
-                <td>
-                  {this.state.categories}
-                </td>
-              </tr>
-              */}
               <tr>
                 <th>Skip</th>
                  
@@ -360,8 +381,6 @@ class App extends React.Component {
               </tr>
             </tbody>
           </table>
-          </section>
-          <section className='section'>
           <h2>Movies</h2>
             <table id = 'movies'> 
               <tbody>
@@ -380,28 +399,35 @@ class App extends React.Component {
               </tbody>
             </table>
           </section>
-          <section>
-          <div id="tagtable">
-            <h2>Tags</h2>
-           {/* <div> {this.uniqueValues()}</div>*/}
-            <table >
-              <tbody>
-                <tr>
-                  <th>{unique[0]}</th> 
-                  <td></td>
-                  
-                </tr>
-                <tr>
-                    <th>{unique[1]}</th>
-                    <td></td>
-                </tr>
-                <tr>
-                    <th>{unique[2]}</th>
-                    <td></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <section id="tags">
+            <div>
+              <h2 id="tagheader">Tags</h2>
+              {/*<div className={<data/>} > </div> */}
+              {/*<div> Hey!!!{this.uniqueValues()}</div>*/}
+              {/*<div> {mydata.filter(foo => true).map(data => <div key={data.someIdentifier}>{data.whatever}</div>)} </div>  */}            
+              <table id="tagtable">
+                <tbody>
+                  <tr>
+                    <th className={unique[0]}>{unique[0]}</th> 
+                    <td>classifier: {uno}</td>
+                    <td>classification: {dos}</td>
+                    <td>time: {tres}</td>
+                  </tr>
+                  <tr>
+                      <th className={unique[1]}>{unique[1]}</th>
+                      <td>classifier: {uno}</td>
+                      <td>classification: {dos}</td>
+                      <td>time: {tres}</td>
+                  </tr>
+                  <tr>
+                      <th className={unique[2]}>{unique[2]}</th>
+                      <td>classifier: {uno}</td>
+                      <td>classification: {dos}</td>
+                      <td>time: {tres}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </section>
       </div>
     ) 

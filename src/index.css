@@ -29,7 +29,6 @@ h2 {
   z-index: -1;
 }
 
-
 #videocontainer {
   display:inline-block;
   position: relative;
@@ -40,6 +39,14 @@ h2 {
   border:5px solid black; 
   border-radius: 10px; 
   box-shadow: 0 5px 50px #333
+}
+
+#player-wrapper {
+  background-color:purple;
+}
+
+#videoplayer {
+  float: left;
 }
 
 .konva-stage {
@@ -66,10 +73,13 @@ h2 {
   margin-left: 20px;
 }
 
+#tags {
+  float: right;
+  margin-right: 300px;
+}
+
 #tagtable {
   background-color: #7a7e85;
-  float: right;
-  margin-right: 700px;
 }
 
 .canvas {
@@ -79,5 +89,15 @@ h2 {
   margin-top: 0px;
 }
 
+th.violence {
+  color: wheat;
+}
 
+th.nudity {
+  color: purple;
+}
+
+th.deadpool {
+  color: red;
+}
   
