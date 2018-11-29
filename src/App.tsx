@@ -3,7 +3,9 @@ import * as ReactDOM from 'react-dom';
 import './App.css';
 import ReactPlayer from 'react-player'
 import {Stage, Layer, Rect, Transformer } from 'react-konva'
-
+import WaveSurfer, { WaveSurferInstance } from "wavesurfer.js"
+import MinimapPlugin from "wavesurfer.js/dist/plugin/wavesurfer.minimap.js"
+import RegionsPlugin, {Region, WaveSurferRegions, RegionInitializationProps,} from "wavesurfer.js/dist/plugin/wavesurfer.regions.js"
 
 const movies = {
   sintelTrailer: 'http://media.w3.org/2010/05/sintel/trailer.mp4',
@@ -12,6 +14,10 @@ const movies = {
   deadpool: 'https://www.youtube.com/watch?v=ONHBaC-pfsk',
 };
 
+
+const audioclips = {
+  sampleAudio: 'http://ia902606.us.archive.org/35/items/shortpoetry_047_librivox/song_cjrg_teasdale_64kb.mp3'
+};
 
 const deadpool: IMedia<IVideoPrediction> = {
   title: 'Deadpool 2',
@@ -25,6 +31,13 @@ const deadpool: IMedia<IVideoPrediction> = {
               ],
 }
 
+const sampleAudio: IMedia<IAudioPrediction> = {
+  title: 'Test Audio',
+  sourceUrl: 'http://ia902606.us.archive.org/35/items/shortpoetry_047_librivox/song_cjrg_teasdale_64kb.mp3',
+  predictions: [{classifier: 'stronglanguage',confidence:1, time:3,duration:2,},
+                {classifier: 'loud', confidence:1, time:7,duration:3,}
+              ],
+}
 interface IMedia<PredictionTypes extends IVisualPrediction | IVideoPrediction | IAudioPrediction> {
   title: string
   sourceUrl: string // URL to either video, image, or audio file
@@ -59,11 +72,14 @@ class App extends React.Component {
 
   private player!:ReactPlayer;
 
+  private audioPlayer!:WaveSurferInstance & WaveSurferRegions;
+  
+
   state: { media:IMedia<IVideoPrediction>,
           played:number, loaded:number, playing: boolean, url:string, 
           volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
           playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, categories: Array<string>, 
-          mediamap : {[key:number]:IVideoPrediction}} = {
+          mediamap : {[key:number]:IVideoPrediction}, audio:IMedia<IAudioPrediction>, audiomap:{[key:number]:IAudioPrediction},} = {
 
       played: 0,
       loaded: 0,
@@ -80,11 +96,30 @@ class App extends React.Component {
       isDragging: false,
       categories: deadpool.predictions.map(a => a.classifier),
       media: deadpool,
+      audio: sampleAudio,
       mediamap: {},
+      audiomap: {},
   } 
 
 
   componentDidMount() {
+
+    console.log("Start of Mount");
+  
+    this.audioPlayer = WaveSurfer.create({
+      container: "#audiocontainer",
+      hideScrollbar: false,
+      loopSelection: true,
+      progressColor: "purple",
+      responsive: true,
+      scrollParent: true,
+      waveColor: "red",
+      plugins: [
+        MinimapPlugin.create(),
+        RegionsPlugin.create({dragSelection:true}),
+      ],}) as WaveSurferInstance & WaveSurferRegions;     
+      console.log("end of Mount");
+      
   }
   componentDidUpdate() {
   }
@@ -188,19 +223,54 @@ class App extends React.Component {
     console.log('createMapOfTagsForMovie')
     //The value might need to be Array<string> if we can have more than one classifier at a particular time of the video
     deadpool.predictions.map(a=> this.state.mediamap[a.time]=a)
-    console.log(this.state.mediamap[4])
-    console.log(this.state.mediamap[10])
-    console.log(this.state.mediamap[12])
-    console.log(this.state.mediamap[4].classifier)
-    console.log(this.state.mediamap[10].classifier)
-    console.log(this.state.mediamap[12].classifier)
+    
   }
+
+  createMapofTagsForAudio = () => {
+    console.log('createMapOfTagsForAudio')
+    //The value might need to be Array<string> if we can have more than one classifier at a particular time of the video
+    sampleAudio.predictions.map(a=> this.state.audiomap[a.time]=a)
+    
+  }
+
+  addRegionFunc = () => {
+    let options, i;
+    console.log("Start of add regions")
+    for (i=0;i<sampleAudio.predictions.length;i++)
+    {
+      let newRegion;
+          options = {
+            start: sampleAudio.predictions[i].time,
+            end: sampleAudio.predictions[i].time +sampleAudio.predictions[i].duration,
+            color: "orange"
+           };
+           console.log(options.start)
+           console.log(options.end)
+           newRegion = this.audioPlayer.addRegion(options);
+     }
+  }
+
   
   setMovieUrl = (r: string ) => {
     console.log(r)
+
+    console.log("Loading movie in audioplayer");
+
+    //this.audioPlayer.load(r)
+    this.audioPlayer.load(sampleAudio.sourceUrl)
+    
+    //this.audioPlayer.playPause()
     this.state.url = r;
     this.setState({ url: r })
     this.createMapofTagsForMovie()
+    this.createMapofTagsForAudio()  
+
+    this.audioPlayer.on("ready",() =>{
+      this.addRegionFunc()
+    })
+    
+
+   
   }
 
 
@@ -218,10 +288,6 @@ class App extends React.Component {
   // onSearch = (event: any) => {
   //   console.log("searching tags....")
   // }
-
-  ref = (player : any) => {
-    this.player = player
-  }
 
   render() {
     const { url, playing, volume, loaded, duration, playbackRate, played } = this.state
@@ -246,6 +312,8 @@ class App extends React.Component {
           }
       }
     } 
+
+
 
     return (                
 
@@ -300,6 +368,8 @@ class App extends React.Component {
               </Stage>
             </div>
           </div>  
+          <div  id="audiocontainer"></div>
+                  
           <h2>Settings</h2>
           <table id="controls">
             <tbody>
