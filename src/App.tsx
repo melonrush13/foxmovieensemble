@@ -64,7 +64,7 @@ class App extends React.Component {
 
   state: { media:IMedia<IVideoPrediction>,
           played:number, loaded:number, playing: boolean, url:string, 
-          volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
+          volume:number, mute: boolean, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
           playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, categories: Array<string>, 
           mediamap : {[key:number]:IVideoPrediction}, color: string, time: number} = {
 
@@ -73,6 +73,7 @@ class App extends React.Component {
       playing: true,
       url: movies.deadpool, // url: '',
       volume: 0.8,
+      mute: true,
       loop: true,
       duration: 0,
       playbackRate: 1.0,
@@ -93,13 +94,10 @@ class App extends React.Component {
   }
   
   componentDidUpdate() {
-    console.log(this.state.time)
+   // console.log(this.state.time)
 
   }
 
-  onReady = () => {
-    
-  }
   playPause = () => {
    // console.log('play/pause')
     this.setState({ playing: !this.state.playing })
@@ -120,11 +118,16 @@ class App extends React.Component {
     this.setState({ playing: false })
   }
 
-  onMute = () => {
-    this.setState({ volume: 0 })
-    if(this.state.volume === 0) {
+  onToggleMute = () => {
+    this.setState({mute: !this.state.mute})
+
+    if(this.state.mute === true) {
+      this.setState({ volume: 0})
+    }
+    if(this.state.mute === false) {
       this.setState({ volume: .8})
     }
+
   }
 
   onProgress = (state : {playedSeconds: number , loadedSeconds: number, played: number, loaded: number}) => {
@@ -151,16 +154,22 @@ class App extends React.Component {
    }
 
    OnSeek = (e: number) => {
-    // var newTime = this.state.time + e;
-    // console.log("new Time: " + newTime)
-    // console.log("current Time: " + this.state.time )
-    console.log(e)
+    var newTime = this.state.played + e;
+    console.log("new Time: " + newTime)
+    console.log("current Time: " + this.state.time )
+
+    this.setState({playedSeconds: newTime})
   }  
 
   setPlaybackRate = (e: number) => {
+    if(this.state.playing === false) {
+      this.setState({playing: true})
+    }
+
     console.log(e)
     this.state.playbackRate = e;
     this.setState({ playingbackRate: e })
+
   }
   createMapofTagsForMovie = () => {
     console.log('createMapOfTagsForMovie')
@@ -262,9 +271,9 @@ class App extends React.Component {
               <tr>
                 <th>Playback</th>
                 <td>
-                  <button onClick={()=> this.setPlaybackRate(.5)}>.5</button>
-                  <button onClick={()=> this.setPlaybackRate(1)}>1</button>
-                  <button onClick={() => this.setPlaybackRate(2)}>2</button>
+                  <button onClick={()=> this.setPlaybackRate(.5)}>.5x</button>
+                  <button onClick={()=> this.setPlaybackRate(1)}>1x</button>
+                  <button onClick={() => this.setPlaybackRate(2)}>2x</button>
                 </td>
               </tr>
               <tr>
@@ -272,12 +281,12 @@ class App extends React.Component {
                 <td>
                   <button onClick={() => this.OnSeek(-1)}>Previous Frame</button>
                   <button onClick={() => this.OnSeek(1)}>Next Frame</button>
-                  <button onClick={() => this.OnSeek(2)}>test Frame</button>
+                  <button onClick={() => this.OnSeek(10)}>test Frame</button>
                 </td>
               </tr>
               <tr>
                 <th>Volume</th>
-                <button onClick={this.onMute}>On/Off</button>
+                <input type='checkbox' checked={this.state.mute} onChange={this.onToggleMute}></input>
                 <td>
                 </td>
               </tr>
@@ -294,6 +303,10 @@ class App extends React.Component {
                 <th>Loaded:</th>
                 <td> {this.state.loadedSeconds} </td>
               </tr>
+              <tr>
+                <th>Played</th>
+                <td><progress max={100} value={this.state.playedSeconds} /></td>
+            </tr>
             </tbody>
           </table>
           <h2>Movies</h2>
@@ -331,7 +344,7 @@ class App extends React.Component {
                       <td> {prediction.classifier} </td>
                       <td>
                         <button onClick={a => {
-                          this.setState({time: prediction.time})
+                          this.setState({playedSeconds: prediction.time})
                           this.OnSeek(this.state.time)
                       }}>View</button>
                       </td>
