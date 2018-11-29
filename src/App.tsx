@@ -6,6 +6,9 @@ import {Stage, Layer, Rect, Transformer } from 'react-konva'
 import WaveSurfer, { WaveSurferInstance } from "wavesurfer.js"
 import MinimapPlugin from "wavesurfer.js/dist/plugin/wavesurfer.minimap.js"
 import RegionsPlugin, {Region, WaveSurferRegions, RegionInitializationProps,} from "wavesurfer.js/dist/plugin/wavesurfer.regions.js"
+import { dragDistance } from 'konva';
+import { S_IFCHR } from 'constants';
+
 
 const movies = {
   sintelTrailer: 'http://media.w3.org/2010/05/sintel/trailer.mp4',
@@ -24,8 +27,8 @@ const deadpool: IMedia<IVideoPrediction> = {
   sourceUrl: 'https://www.youtube.com/watch?v=D86RtevtfrA',
   predictions: [{classifier: 'violence', confidence: 1, xStart: 0, yStart: 0, xEnd: 100, yEnd: 100, time: 3, },
                 {classifier: 'violence', confidence: 2, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 7, },
-                {classifier: 'violence', confidence: 3, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 15, },
                 {classifier: 'nudity', confidence: 4, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 10},
+                {classifier: 'violence', confidence: 3, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 15, },
                 {classifier: 'deadpool', confidence: 5, xStart: 200, yStart: 200, xEnd: 300, yEnd: 300, time: 12},
                 {classifier: 'deadpool', confidence: 6, xStart: 200, yStart: 200, xEnd: 300, yEnd: 300, time: 14}
               ],
@@ -79,7 +82,8 @@ class App extends React.Component {
           played:number, loaded:number, playing: boolean, url:string, 
           volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
           playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, categories: Array<string>, 
-          mediamap : {[key:number]:IVideoPrediction}, audio:IMedia<IAudioPrediction>, audiomap:{[key:number]:IAudioPrediction},} = {
+          mediamap : {[key:number]:IVideoPrediction}, audio:IMedia<IAudioPrediction>, audiomap:{[key:number]:IAudioPrediction},
+          displayBox: boolean, color: string, time: number} = {
 
       played: 0,
       loaded: 0,
@@ -99,6 +103,9 @@ class App extends React.Component {
       audio: sampleAudio,
       mediamap: {},
       audiomap: {},
+      displayBox: false,
+      color: '',
+      time: 0,
   } 
 
 
@@ -121,54 +128,39 @@ class App extends React.Component {
       console.log("end of Mount");
       
   }
+
   componentDidUpdate() {
   }
 
-  uniqueValues() {
-    var unique = this.state.categories.filter(function(value, index, self) {
-      return self.indexOf(value) === index;
-    })
-
-    console.log("unique array: " + unique);
-    let i=0;
-    let j=0;
-    let data;
-    for (i=0; i<unique.length; i++) {
-      console.log("category " + unique[i])
-      for (j=0; j < deadpool.predictions.length; j++ ) {
-          console.log("confidence " + deadpool.predictions[j].confidence);
-          if(deadpool.predictions[j].classifier === unique[i]) {
-            console.log("these are the same: " + deadpool.predictions[j].classifier + " and " + unique[i])
-            data = deadpool.predictions[j];
-            console.log("classifier: " + data.classifier + ", confidence: " + data.confidence + ", time: " + data.time)
-            return data.time;
-          }
-      }
-    } 
+  playPauseAudio = () => {
+    console.log("Play pause audio")
+    this.audioPlayer.playPause();
   }
 
+  LoadAudio = () => {
+    console.log("Init audio")
+    this.LoadAudioInPlayer()
+  }
 
   playPause = () => {
     console.log('play/pause')
     this.setState({ playing: !this.state.playing })
+
+    //plays a default movie if none is selected
+    if(this.state.url === '') {
+      this.setMovieUrl(movies.sintelTrailer)
+    }
   }
+
   onPlay = () => {
     console.log('onPlay')
     this.setState({ playing: true })
+    this.audioPlayer.playPause()
   }
   onPause = () => {
     console.log('onPause')
     this.setState({ playing: false })
-  }
-
-  changeCurrentTime = (e: number) => {
-    console.log("clicked ")
-    const currTime = this.state.playedSeconds;
-    // const newTime = currTime + e; 
-    // //this.setState({playedSeconds: newTime})
-    // this.setState({played: newTime})
-    // //console.log(this.refs.ReactPlayer)
-    
+    this.audioPlayer.playPause()
   }
 
   OnSeek = (e: number) => {
@@ -188,31 +180,46 @@ class App extends React.Component {
   }
 
   onProgress = (state : {playedSeconds: number , loadedSeconds: number, played: number}) => {
-    console.log('onProgress ', state)
+    //console.log('onProgress ', state)
     // console.log("secs: " + state.playedSeconds);    
-    this.setState({loadedSeconds: state.loadedSeconds}); 
-    this.setState({playedSeconds: state.playedSeconds});
-     //Get classifier active for this second
-    this.setState({curr_classifier:this.state.mediamap[state.playedSeconds].classifier});
-    //TODO: Highlight this classifier with a different color
-     //Get x and y co-ordinates for this second
-    this.setState({curr_xstart:this.state.mediamap[state.playedSeconds].xStart});
-    this.setState({curr_xend:this.state.mediamap[state.playedSeconds].xEnd});
-    this.setState({curr_ystart:this.state.mediamap[state.playedSeconds].yStart});
-    this.setState({curr_yend:this.state.mediamap[state.playedSeconds].yEnd});
-    //TODO: Draw the bounding box for this coordinates at this second
+    var roundedPlayedSec = Math.round(this.state.playedSeconds)
+
+    this.setState({loadedSeconds: state.loadedSeconds, playedSeconds: state.playedSeconds, time: roundedPlayedSec})
+
+    //displays the correct bounding box based on time
+    var i;
+    var finishTime;
+    var currentPrediction;
+    for (i=0; i < deadpool.predictions.length; i++) {
+      finishTime = deadpool.predictions[i].time + 2;
+      if (deadpool.predictions[i].time === roundedPlayedSec) {
+        this.setState({displayBox: true})
+        console.log("can display bounding box " + deadpool.predictions[i].confidence + "? = " + this.state.displayBox)
+        console.log(this.state.mediamap[roundedPlayedSec]);
+      }
+      if(finishTime === roundedPlayedSec) {
+        this.setState({displayBox: false})
+        console.log("End display of box " + deadpool.predictions[i].confidence)
+      }
+    }
+
+
+
+    //check if current prediction is null
+    //if not, print out the currentprediction on the side (classifier, and current xtart, ystart, and show that specific bounding )
+    // currentPrediction = this.state.mediamap[roundedPlayedSec];
+    // {
+    //  console.log(currentPrediction.classifier);
+    //   //console.log(currentPrediction.confidence);
+    //   //console.log(currentPrediction.time);
+    // }
+
+    
+
    }
 
-//attempting to display bounding box based on time given on tag
-    // var i;
-    // for(i = 0; i < this.state.media.predictions.length; i++) {
-    //   if (this.state.media.predictions[i].time === roundedPlayedSec)
-    //   {
-    //     console.log("boop!")
-    //     this.setState({correctTime: true})
-    //   }
-
-    // }
+    
+ 
 
   setPlaybackRate = (e: number) => {
     console.log(e)
@@ -233,43 +240,99 @@ class App extends React.Component {
     
   }
 
+  displayaudiotag = (e:string) => {
+    console.log("display tag");
+    return (
+      <body text="white">
+      <tr>{e}</tr>
+      </body>
+    );
+
+  
+  }
+
   addRegionFunc = () => {
     let options, i;
     console.log("Start of add regions")
     for (i=0;i<sampleAudio.predictions.length;i++)
     {
-      let newRegion;
+      let newRegion:Region;
           options = {
             start: sampleAudio.predictions[i].time,
             end: sampleAudio.predictions[i].time +sampleAudio.predictions[i].duration,
-            color: "orange"
+            color: "orange",
            };
            console.log(options.start)
            console.log(options.end)
            newRegion = this.audioPlayer.addRegion(options);
+           newRegion.id = sampleAudio.predictions[i].classifier;
      }
+     this.audioPlayer.on("region-in",(r) => {
+      //this.displayaudiotags(r)
+      console.log("region in")
+      
+      let options = {
+        start: r.start,
+        end: r.end,
+        color: "yellow",
+        };
+    this.audioPlayer.addRegion(options);
+    const domContainer = document.querySelector('#audiotag');
+    ReactDOM.render(this.displayaudiotag(this.state.audiomap[r.start].classifier), domContainer);
+    })
+
+    this.audioPlayer.on("region-out",(r) => {
+      //this.undisplayaudiotags(r)
+      console.log("region out")
+      let options = {
+        start: r.start,
+        end: r.end,
+        color: "orange",
+        };
+  
+    this.audioPlayer.addRegion(options);
+    const domContainer = document.querySelector('#audiotag');
+    let e:string = ""
+    ReactDOM.render(this.displayaudiotag(""), domContainer);
+    })
   }
 
   
-  setMovieUrl = (r: string ) => {
-    console.log(r)
 
+  undisplayaudiotags = (r:Region) => {
+    console.log("in region out")
+    r.id = "";
+  }
+
+  highlightregion = (time:number) => {
+    let options = {
+      start: this.state.audiomap[time].time,
+      end: this.state.audiomap[time].time +this.state.audiomap[time].duration,
+      color: "red",
+  };
+
+  this.audioPlayer.addRegion(options);
+}
+  
+
+  LoadAudioInPlayer = () => {
     console.log("Loading movie in audioplayer");
-
-    //this.audioPlayer.load(r)
     this.audioPlayer.load(sampleAudio.sourceUrl)
-    
-    //this.audioPlayer.playPause()
-    this.state.url = r;
-    this.setState({ url: r })
-    this.createMapofTagsForMovie()
     this.createMapofTagsForAudio()  
-
+    
     this.audioPlayer.on("ready",() =>{
       this.addRegionFunc()
     })
-    
 
+    this.audioPlayer.playPause();
+
+  }
+
+  setMovieUrl = (r: string ) => {
+    console.log(r)
+       this.state.url = r;
+    this.setState({ url: r })
+    //this.createMapofTagsForMovie()
    
   }
 
@@ -279,15 +342,13 @@ class App extends React.Component {
 
   }
 
- 
-
-
   handleTransform = () => {
     console.log("transforming.....");
   }
   // onSearch = (event: any) => {
   //   console.log("searching tags....")
   // }
+
 
   render() {
     const { url, playing, volume, loaded, duration, playbackRate, played } = this.state
@@ -318,11 +379,13 @@ class App extends React.Component {
     return (                
 
       <div className ='app'>
-        <section className='videoPlayer'>
-          <div id="title">
-            <h1>Fox Movie Ensemble</h1>
-          </div>
-          <div className='player-wrapper'>
+      <section id="header">
+        <div id="title">
+          <h1>Fox Movie Ensemble</h1>
+        </div>
+      </section>
+        <section className='videoPlayer' id="videoplayer">
+          <div className='player-wrapper' id="player-wrapper">
             <div id="videocontainer">
             
               <ReactPlayer
@@ -347,6 +410,7 @@ class App extends React.Component {
                       height={prediction.yEnd - prediction.yStart} 
                       draggable 
                       name="myRect"
+                      visible={this.state.time === Math.round(prediction.time)}
                       fill={this.state.isDragging ? 'red' : 'transparent'}
                       stroke="black"
                       //stroke = prediction.classifier
@@ -360,7 +424,6 @@ class App extends React.Component {
                         console.log("Done dragging!");                          
                       }}
                       onTransformStart={() => {
-                        console.log("oh hai")
                       }}
                       />})    
                   }
@@ -369,14 +432,22 @@ class App extends React.Component {
             </div>
           </div>  
           <div  id="audiocontainer"></div>
+
                   
           <h2>Settings</h2>
+          <h2 id="settings">Settings</h2>
           <table id="controls">
             <tbody>
               <tr>
                 <th>Controls</th>
                 <td>
                   <button onClick={this.playPause}> Play/Pause</button>
+                </td>
+                <td>
+                  <button onClick={this.playPauseAudio}> Play/Pause Audio</button>
+                </td>
+                <td>
+                  <button onClick={this.LoadAudio}> Init Audio</button>
                 </td>
               </tr>
               <tr>
@@ -387,21 +458,9 @@ class App extends React.Component {
                   <button onClick={() => this.setPlaybackRate(2)}>2</button>
                 </td>
               </tr>
-              {/* 
-              <tr>
-                <th>Search</th>
-                <td>
-                  <input type="text" onChange={this.onSearch} placeholder="Search by classifier.." /> 
-                  
-                </td>
-                <td>
-                  {this.state.categories}
-                </td>
-              </tr>
-              */}
+              {/*
               <tr>
                 <th>Skip</th>
-                 
                 <td>
                   <button onClick={() => this.OnSeek(-1)}>Previous Frame</button>
                   <button onClick={() => this.OnSeek(1)}>Next Frame</button>
@@ -415,6 +474,7 @@ class App extends React.Component {
                 />
                 </td>
               </tr>
+              */}
             </tbody>
           </table>
           <h2>State</h2>
@@ -430,8 +490,6 @@ class App extends React.Component {
               </tr>
             </tbody>
           </table>
-          </section>
-          <section className='section'>
           <h2>Movies</h2>
             <table id = 'movies'> 
               <tbody>
@@ -450,33 +508,45 @@ class App extends React.Component {
               </tbody>
             </table>
           </section>
-          <section>
-          <div id="tagtable">
-            <h2>Tags</h2>
-           {/* <div> {this.uniqueValues()}</div>*/}
-            <table >
-              <tbody>
-                <tr>
-                  <th>{unique[0]}</th> 
-                  <td></td>
-                  
+          <section id="tags">
+            <div>
+              <h2 id="tagheader">Tags</h2>
+              <table id="tagtable">
+              <thead>
+                <tr> 
+                  <th>Time</th>
+                  <th>Classifier</th>
+                  <th>Button</th>
                 </tr>
-                <tr>
-                    <th>{unique[1]}</th>
-                    <td></td>
-                </tr>
-                <tr>
-                    <th>{unique[2]}</th>
-                    <td></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          </section>
+              </thead>
+                <tbody> 
+                  {this.state.media.predictions.map((prediction) => {return <tr>
+                      <td>{prediction.time}</td>
+                      <td> {prediction.classifier} </td>
+                      <td>
+                        <button onClick={a => {
+                          this.setState({time: prediction.time})
+                          this.setState({})
+                      }}> View </button>
+                      </td>
+                    </tr>
+                  })}
+                </tbody>
+              </table>
+            </div>
+              <h2 id="audiotags">Audio Tags</h2>
+              <div id="audiotag"></div>
+              
+            </section>
+          <section id="footer">
+            <div id="title">
+            </div>
+           </section>
       </div>
-    ) 
-  }
+      ) 
+   }
 }
+
 
 
 export default App;

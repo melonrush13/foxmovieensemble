@@ -26,9 +26,21 @@ h2 {
 
 .react-player {
   position: absolute;
-  z-index: -1;
+  z-index: -1;  
 }
 
+#videoplayer {
+  width : 50%;
+  float: left;
+  /*background-color: pink; */
+}
+
+#header {
+  background-color:transparent;
+}
+#footer {
+  background-color:transparent;
+}
 
 #videocontainer {
   display:inline-block;
@@ -66,10 +78,13 @@ h2 {
   margin-left: 20px;
 }
 
+#tags {
+  float: right;
+  width: 50%;
+}
+
 #tagtable {
   background-color: #7a7e85;
-  float: right;
-  margin-right: 700px;
 }
 
 .canvas {
@@ -79,5 +94,15 @@ h2 {
   margin-top: 0px;
 }
 
+th.violence {
+  color: wheat;
+}
 
+th.nudity {
+  color: purple;
+}
+
+th.deadpool {
+  color: red;
+}
   
