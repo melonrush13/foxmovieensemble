@@ -10,8 +10,6 @@ import { timingSafeEqual } from 'crypto';
 
 const movies = {
   sintelTrailer: 'http://media.w3.org/2010/05/sintel/trailer.mp4',
-//  bunnyTrailer: 'http://media.w3.org/2010/05/bunny/trailer.mp4',
- // bunnyMovie: 'http://media.w3.org/2010/05/bunny/movie.mp4',
   deadpool: 'https://www.youtube.com/watch?v=ONHBaC-pfsk',
 };
 
@@ -20,14 +18,19 @@ const deadpool: IMedia<IVideoPrediction> = {
   title: 'Deadpool 2',
   sourceUrl: 'https://www.youtube.com/watch?v=D86RtevtfrA',
   predictions: [{classifier: 'violence', confidence: 1, xStart: 0, yStart: 0, xEnd: 100, yEnd: 100, time: 3, },
-                {classifier: 'violence', confidence: 2, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 7, },
+                {classifier: 'violence', confidence: 2, xStart: 250, yStart: 350, xEnd: 300, yEnd: 400, time: 7, },
                 {classifier: 'nudity', confidence: 4, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 10},
-                {classifier: 'violence', confidence: 3, xStart: 100, yStart: 100, xEnd: 200, yEnd: 200, time: 15, },
+                {classifier: 'violence', confidence: 3, xStart: 100, yStart: 0, xEnd: 200, yEnd: 100, time: 15, },
                 {classifier: 'deadpool', confidence: 5, xStart: 200, yStart: 200, xEnd: 300, yEnd: 300, time: 12},
-                {classifier: 'deadpool', confidence: 6, xStart: 200, yStart: 200, xEnd: 300, yEnd: 300, time: 14}
+                {classifier: 'deadpool', confidence: 6, xStart: 300, yStart: 300, xEnd: 350, yEnd: 350, time: 30}
               ],
 }
 
+
+//todo: have display one second before and one second 
+//add color from evan's code, returns rgb string and defaults to opacity
+
+//todo:change color of table element when correct tag is being displayed
 interface IMedia<PredictionTypes extends IVisualPrediction | IVideoPrediction | IAudioPrediction> {
   title: string
   sourceUrl: string // URL to either video, image, or audio file
@@ -68,6 +71,7 @@ class App extends React.Component {
           playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, categories: Array<string>, 
           mediamap : {[key:number]:IVideoPrediction}, color: string, time: number} = {
 
+      //percentage out of 100
       played: 0,
       loaded: 0,
       playing: true,
@@ -86,6 +90,7 @@ class App extends React.Component {
       media: deadpool,
       mediamap: {},
       color: '',
+      //rounded number of played seconds
       time: 0,
   } 
 
@@ -131,7 +136,7 @@ class App extends React.Component {
   }
 
   onProgress = (state : {playedSeconds: number , loadedSeconds: number, played: number, loaded: number}) => {
-    //console.log('onProgress ', state)
+    console.log('onProgress ', state)
     var roundedPlayedSec = Math.round(this.state.playedSeconds)
     this.setState({loadedSeconds: state.loadedSeconds, playedSeconds: state.playedSeconds, time: roundedPlayedSec})
 
@@ -160,6 +165,15 @@ class App extends React.Component {
 
     this.setState({playedSeconds: newTime})
   }  
+
+
+  OnSeekChange = (e: number) => {
+    this.setState({ played: e})
+
+
+    this.player.seekTo(e)
+
+  }
 
   setPlaybackRate = (e: number) => {
     if(this.state.playing === false) {
@@ -194,9 +208,10 @@ class App extends React.Component {
   handleTransform = () => {
     console.log("transforming.....");
   }
-  // onSearch = (event: any) => {
-  //   console.log("searching tags....")
-  // }
+
+  ref = (player: any) => {
+    this.player = player
+  }
 
 
   render() {
@@ -219,6 +234,7 @@ class App extends React.Component {
           <div className='player-wrapper' id="player-wrapper">
             <div id="videocontainer">
               <ReactPlayer
+                  ref ={this.ref}
                   className = 'react-player'
                   url = {url} 
                   playing = {playing}
@@ -240,7 +256,7 @@ class App extends React.Component {
                       name="myRect"
                       visible={this.state.time === Math.round(prediction.time)}
                       fill={this.state.isDragging ? 'red' : 'transparent'}
-                      stroke="black"
+                      stroke="white"
                       //stroke = prediction.classifier
                       onDragStart={() => {  
                         this.setState({ isDragging: true });
@@ -281,13 +297,14 @@ class App extends React.Component {
                 <td>
                   <button onClick={() => this.OnSeek(-1)}>Previous Frame</button>
                   <button onClick={() => this.OnSeek(1)}>Next Frame</button>
-                  <button onClick={() => this.OnSeek(10)}>test Frame</button>
+                  <button onClick={() => this.OnSeekChange(10)}>test Frame</button>
+                  <button onClick={() => this.OnSeekChange(10)}>test Two</button>   
                 </td>
               </tr>
               <tr>
                 <th>Volume</th>
-                <input type='checkbox' checked={this.state.mute} onChange={this.onToggleMute}></input>
                 <td>
+                  <input type='checkbox' checked={this.state.mute} onChange={this.onToggleMute}></input>
                 </td>
               </tr>
             </tbody>
@@ -338,16 +355,15 @@ class App extends React.Component {
                   <th>Button</th>
                 </tr>
               </thead>
-                <tbody> 
+              <tbody> 
                   {this.state.media.predictions.map((prediction) => {return <tr>
                       <td>{prediction.time}</td>
                       <td> {prediction.classifier} </td>
                       <td>
-                        <button onClick={a => {
-                          this.setState({playedSeconds: prediction.time})
-                          this.OnSeek(this.state.time)
-                      }}>View</button>
-                      </td>
+                        <button onClick = {a => {
+                          this.OnSeekChange(prediction.time)
+                        }}>Seek</button>
+                      </td> 
                     </tr>
                   })}
                 </tbody>
