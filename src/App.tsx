@@ -5,6 +5,7 @@ import ReactPlayer from 'react-player'
 import {Stage, Layer, Rect, Transformer } from 'react-konva'
 import { dragDistance } from 'konva';
 import { S_IFCHR } from 'constants';
+import { timingSafeEqual } from 'crypto';
 
 
 const movies = {
@@ -65,12 +66,12 @@ class App extends React.Component {
           played:number, loaded:number, playing: boolean, url:string, 
           volume:number, loop: boolean, duration: number, playbackRate: number, loadedSeconds: number,
           playedSeconds: number, boxHeight: number, boxWidth: number, isDragging: boolean, categories: Array<string>, 
-          mediamap : {[key:number]:IVideoPrediction}, displayBox: boolean, color: string, time: number} = {
+          mediamap : {[key:number]:IVideoPrediction}, color: string, time: number} = {
 
       played: 0,
       loaded: 0,
       playing: true,
-      url: '', // url: null,
+      url: movies.deadpool, // url: '',
       volume: 0.8,
       loop: true,
       duration: 0,
@@ -83,29 +84,31 @@ class App extends React.Component {
       categories: deadpool.predictions.map(a => a.classifier),
       media: deadpool,
       mediamap: {},
-      displayBox: false,
       color: '',
       time: 0,
   } 
 
 
   componentDidMount() {
-    this.createMapofTagsForMovie()
-    
-
-
   }
+  
   componentDidUpdate() {
+    console.log(this.state.time)
+
   }
 
+  onReady = () => {
+    
+  }
   playPause = () => {
-    console.log('play/pause')
+   // console.log('play/pause')
     this.setState({ playing: !this.state.playing })
 
     //plays a default movie if none is selected
     if(this.state.url === '') {
       this.setMovieUrl(movies.sintelTrailer)
     }
+    console.log("play/pause @: " + this.state.time)
   }
 
   onPlay = () => {
@@ -117,29 +120,21 @@ class App extends React.Component {
     this.setState({ playing: false })
   }
 
-  OnSeek = (e: number) => {
-    console.log("seeeeeking")
-    this.player.seekTo(e);
-  }
-  
-  onSeekMouseDown = (e:any) => {
-    this.setState({ seeking: true })
-  }
-  onSeekChange = (e:any) => {
-    this.setState({ played: parseFloat(e.target.value) })
-  }
-  onSeekMouseUp = (e:any) => {
-    this.setState({ seeking: false })
-    this.player.seekTo(parseFloat(e.target.value))
+  onMute = () => {
+    this.setState({ volume: 0 })
+    if(this.state.volume === 0) {
+      this.setState({ volume: .8})
+    }
   }
 
-  onProgress = (state : {playedSeconds: number , loadedSeconds: number, played: number}) => {
+  onProgress = (state : {playedSeconds: number , loadedSeconds: number, played: number, loaded: number}) => {
     //console.log('onProgress ', state)
-    // console.log("secs: " + state.playedSeconds);    
     var roundedPlayedSec = Math.round(this.state.playedSeconds)
-
     this.setState({loadedSeconds: state.loadedSeconds, playedSeconds: state.playedSeconds, time: roundedPlayedSec})
 
+    //console.log(roundedPlayedSec);
+    //ellapsed : duration * played
+    
     //displays the correct bounding box based on time
     var i;
     var finishTime;
@@ -147,33 +142,20 @@ class App extends React.Component {
     for (i=0; i < deadpool.predictions.length; i++) {
       finishTime = deadpool.predictions[i].time + 2;
       if (deadpool.predictions[i].time === roundedPlayedSec) {
-        this.setState({displayBox: true})
-        console.log("can display bounding box " + deadpool.predictions[i].confidence + "? = " + this.state.displayBox)
-        console.log(this.state.mediamap[roundedPlayedSec]);
+        //console.log(this.state.mediamap[roundedPlayedSec]);
       }
       if(finishTime === roundedPlayedSec) {
-        this.setState({displayBox: false})
-        console.log("End display of box " + deadpool.predictions[i].confidence)
+       // console.log("End display of box " + deadpool.predictions[i].confidence)
       }
     }
-
-
-
-    //check if current prediction is null
-    //if not, print out the currentprediction on the side (classifier, and current xtart, ystart, and show that specific bounding )
-    // currentPrediction = this.state.mediamap[roundedPlayedSec];
-    // {
-    //  console.log(currentPrediction.classifier);
-    //   //console.log(currentPrediction.confidence);
-    //   //console.log(currentPrediction.time);
-    // }
-
-    
-
    }
 
-    
- 
+   OnSeek = (e: number) => {
+    // var newTime = this.state.time + e;
+    // console.log("new Time: " + newTime)
+    // console.log("current Time: " + this.state.time )
+    console.log(e)
+  }  
 
   setPlaybackRate = (e: number) => {
     console.log(e)
@@ -227,7 +209,6 @@ class App extends React.Component {
         <section className='videoPlayer' id="videoplayer">
           <div className='player-wrapper' id="player-wrapper">
             <div id="videocontainer">
-            
               <ReactPlayer
                   className = 'react-player'
                   url = {url} 
@@ -235,10 +216,8 @@ class App extends React.Component {
                   volume = {volume}
                   playbackRate = {playbackRate}
                   onProgress = {this.onProgress}
-                  onSeek={e => console.log('onSeek', e)}
+                  onSeek={this.OnSeek}
                   onStart={() => console.log('onStart')}
-
-
               />
               <Stage width={640} height={360} className="konvastage">
                 <Layer>
@@ -288,23 +267,20 @@ class App extends React.Component {
                   <button onClick={() => this.setPlaybackRate(2)}>2</button>
                 </td>
               </tr>
-              {/*
               <tr>
                 <th>Skip</th>
                 <td>
                   <button onClick={() => this.OnSeek(-1)}>Previous Frame</button>
                   <button onClick={() => this.OnSeek(1)}>Next Frame</button>
-                  <button onClick={() => this.OnSeek(.5)}>test Frame</button>
-                  <input
-                  type='range' min={0} max={1} step='any'
-                  value={played}
-                  onMouseDown={this.onSeekMouseDown}
-                  onChange={this.onSeekChange}
-                  onMouseUp={this.onSeekMouseUp}
-                />
+                  <button onClick={() => this.OnSeek(2)}>test Frame</button>
                 </td>
               </tr>
-              */}
+              <tr>
+                <th>Volume</th>
+                <button onClick={this.onMute}>On/Off</button>
+                <td>
+                </td>
+              </tr>
             </tbody>
           </table>
           <h2>State</h2>
@@ -356,8 +332,8 @@ class App extends React.Component {
                       <td>
                         <button onClick={a => {
                           this.setState({time: prediction.time})
-                          this.setState({})
-                      }}> View </button>
+                          this.OnSeek(this.state.time)
+                      }}>View</button>
                       </td>
                     </tr>
                   })}
