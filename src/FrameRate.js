@@ -1,9 +1,7 @@
-import React, { Component } from 'react';
+import React, { Component } from "react";
 
 class FrameRate extends Component {
-  render() {
-  }
+  render() {}
 }
-
 
 export default FrameRate;
