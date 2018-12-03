@@ -14,4 +14,3 @@ config.optimization.splitChunks = {
 
 config.optimization.runtimeChunk = false; // Disable chunks
 config.output.filename = 'static/js/[name].js' // disable hashed filenames
-console.log(config)
