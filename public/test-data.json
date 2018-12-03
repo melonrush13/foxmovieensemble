@@ -1,7 +1,7 @@
 {
   "title": "Big Buck Bunny",
-  "sourceUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
   "sourceUrl": "/clip208_ss01.00.24.662.mp4",
+  "sourceUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
   "predictions": [
     {
       "confidence": 33,

@@ -34,7 +34,6 @@ interface IAudioPrediction extends IPrediction {
 interface IAppState {
   url: string;
   volume: number;
-  mute: boolean;
   loop: boolean;
   playbackRate: number;
   boxHeight: number;
@@ -56,7 +55,6 @@ class App extends React.Component<IMedia, IAppState> {
     currentPlaybackTime: 0,
     url: this.props.sourceUrl, // url: '',
     volume: 0.8,
-    mute: true,
     loop: true,
     playbackRate: 1.0,
     boxHeight: 100,
@@ -87,11 +85,6 @@ class App extends React.Component<IMedia, IAppState> {
     });
   }
 
-  onToggleMute = () => {
-    const mute = !this.state.mute;
-    this.setState({ mute, volume: mute ? 0 : 1 });
-  };
-
   onSeek = (newTime: number) => {
     console.log("new Time: " + newTime);
   };
@@ -108,14 +101,6 @@ class App extends React.Component<IMedia, IAppState> {
     this.setState({ playbackRate: rate });
   };
 
-  boundingBoxClicked() {
-    console.log("video clicked");
-  }
-
-  handleTransform = () => {
-    console.log("transforming.....");
-  };
-
   render() {
     this.currentlyPlayingRefs = [];
     const {
@@ -123,7 +108,6 @@ class App extends React.Component<IMedia, IAppState> {
       volume,
       playbackRate,
       predictionsByTime,
-      mute,
       currentPlaybackTime
     } = this.state;
 
@@ -260,16 +244,6 @@ class App extends React.Component<IMedia, IAppState> {
                     <button onClick={() => this.onSeek(1)}>Next Frame</button>
                     <button onClick={() => this.seek(10)}>test Frame</button>
                     <button onClick={() => this.seek(10)}>test Two</button>
-                  </td>
-                </tr>
-                <tr>
-                  <th>Volume</th>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={mute}
-                      onChange={this.onToggleMute}
-                    />
                   </td>
                 </tr>
               </tbody>
