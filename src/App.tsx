@@ -78,9 +78,9 @@ class App extends React.Component<IMedia, IAppState> {
     }, {})
   };
 
-  public async componentDidMount() {}
+  public componentDidMount() {}
 
-  public async componentDidUpdate() {
+  public componentDidUpdate() {
     // Ensure the first label in always in view
     this.currentlyPlayingRefs.slice(0, 1).forEach(el => {
       el.scrollIntoView({ block: "center" });
@@ -142,10 +142,10 @@ class App extends React.Component<IMedia, IAppState> {
 
     const currentPredictions =
       predictionsByTime[Math.round(currentPlaybackTime)] || [];
-    const videoPredictions = currentPredictions.filter(
+    const currentVideoPredictions = currentPredictions.filter(
       ({ x, y, width, height, time }: any) => x && y && width && height && time
     ) as IVideoPrediction[];
-    const audioPredictions = currentPredictions.filter(
+    const currentAudioPredictions = currentPredictions.filter(
       ({ time, duration }: any) => time && duration
     ) as IAudioPrediction[];
 
@@ -168,8 +168,7 @@ class App extends React.Component<IMedia, IAppState> {
           style={{
             flex: "1",
             display: "flex",
-            flexDirection: "row",
-            flexWrap: "wrap",
+            flexFlow: "row nowrap",
             justifyContent: "space-around"
           }}
         >
@@ -207,7 +206,7 @@ class App extends React.Component<IMedia, IAppState> {
                 }}
               >
                 <Layer>
-                  {videoPredictions.map(prediction => {
+                  {currentVideoPredictions.map(prediction => {
                     return (
                       <Rect
                         key={JSON.stringify(prediction)}
@@ -218,6 +217,21 @@ class App extends React.Component<IMedia, IAppState> {
                         name={prediction.classifier}
                         fill={stringToRGBA(prediction.classifier)}
                         stroke="black"
+                      />
+                    );
+                  })}
+                  {currentAudioPredictions.map(prediction => {
+                    return (
+                      <Rect
+                        key={JSON.stringify(prediction)}
+                        x={0}
+                        y={0}
+                        width={videoWidth}
+                        height={videoHeight}
+                        name={prediction.classifier}
+                        fill={stringToRGBA(prediction.classifier, {
+                          alpha: 0.5
+                        })}
                       />
                     );
                   })}
@@ -314,7 +328,15 @@ class App extends React.Component<IMedia, IAppState> {
                         }
                       >
                         <td>{prediction.time}</td>
-                        <td>{prediction.classifier}</td>
+                        <td
+                          style={{
+                            color: stringToRGBA(prediction.classifier, {
+                              alpha: 1
+                            })
+                          }}
+                        >
+                          {prediction.classifier}
+                        </td>
                         <td>{prediction.confidence}</td>
                         <td>{"duration" in prediction ? "Audio" : "Video"}</td>
                         <td>
