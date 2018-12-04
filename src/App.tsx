@@ -3,6 +3,7 @@ import { stringToRGBA } from "./colour";
 // import "./App.css";
 import ReactPlayer from "react-player";
 import { Stage, Layer, Rect, Transformer, Path } from "react-konva";
+import { secondsToTime } from "./time";
 
 //todo: have display one second before and one second
 //add color from evan's code, returns rgb string and defaults to opacity
@@ -129,9 +130,14 @@ class App extends React.Component<IMedia, IAppState> {
     const currentVideoPredictions = currentPredictions.filter(
       ({ x, y, width, height, time }: any) => x && y && width && height && time
     ) as IVideoPrediction[];
-    const currentAudioPredictions = currentPredictions.filter(
-      ({ time, duration }: any) => time && duration
+    const currentAudioPredictions = this.props.predictions.filter(
+      ({ time, duration }: any) =>
+        duration &&
+        time &&
+        currentPlaybackTime >= time / 1000 &&
+        currentPlaybackTime <= (time + duration) / 1000
     ) as IAudioPrediction[];
+    console.log(currentPredictions);
 
     return (
       <div
@@ -158,7 +164,7 @@ class App extends React.Component<IMedia, IAppState> {
         >
           <section
             className="video-player"
-            style={{ border: "1px dotted grey" }}
+            style={{ border: "1px dotted grey", flex: "1" }}
           >
             <h2>Visualizer</h2>
             <div className="player-video" style={{ position: "relative" }}>
@@ -173,7 +179,6 @@ class App extends React.Component<IMedia, IAppState> {
                 }}
                 progressInterval={250}
                 onSeek={this.onSeek}
-                onStart={() => console.log("onStart")}
               />
               <Stage
                 width={videoWidth}
@@ -199,7 +204,9 @@ class App extends React.Component<IMedia, IAppState> {
                         width={prediction.width}
                         height={prediction.height}
                         name={prediction.classifier}
-                        fill={stringToRGBA(prediction.classifier)}
+                        fill={stringToRGBA(prediction.classifier, {
+                          alpha: prediction.confidence / 100
+                        })}
                         stroke="black"
                       />
                     );
@@ -207,7 +214,9 @@ class App extends React.Component<IMedia, IAppState> {
                   {currentAudioPredictions.map(prediction => {
                     return (
                       <Path
-                        fill={stringToRGBA(prediction.classifier)}
+                        fill={stringToRGBA(prediction.classifier, {
+                          alpha: prediction.confidence / 100
+                        })}
                         key={JSON.stringify(prediction)}
                         x={20}
                         y={20}
@@ -265,11 +274,12 @@ class App extends React.Component<IMedia, IAppState> {
             style={{
               maxHeight: "100%",
               overflowY: "scroll",
-              border: "1px dotted grey"
+              border: "1px dotted grey",
+              flex: "1"
             }}
           >
             <h2>Tags</h2>
-            <table style={{ border: "1px dotted grey" }}>
+            <table style={{ border: "1px dotted grey", width: "100%" }}>
               <thead>
                 <tr>
                   <th>Time (ms)</th>
@@ -283,22 +293,40 @@ class App extends React.Component<IMedia, IAppState> {
                 {this.props.predictions
                   .sort((a, b) => a.time - b.time)
                   .map(prediction => {
+                    const isAudio = "duration" in prediction;
                     const isPlaying =
                       Math.round(prediction.time / 1000) ===
                       Math.round(currentPlaybackTime);
+                    const timeCode = isAudio
+                      ? secondsToTime(prediction.time / 1000) +
+                        " - " +
+                        secondsToTime(
+                          ((prediction as IAudioPrediction).duration +
+                            prediction.time) /
+                            1000
+                        )
+                      : secondsToTime(prediction.time / 1000);
+                    const onPlay = (_: React.MouseEvent) => {
+                      const { current } = this.playerRef;
+                      if (current) {
+                        const fraction = prediction.time / 1000 / duration;
+                        current.seekTo(fraction);
+                      }
+                    };
+                    const ref = (ref: HTMLSpanElement | null) =>
+                      isPlaying && ref && this.currentlyPlayingRefs.push(ref);
+
                     return (
                       <tr
                         style={{
                           background: isPlaying ? "lightgrey" : "unset"
                         }}
                         key={JSON.stringify(prediction)}
-                        ref={ref =>
-                          isPlaying &&
-                          ref &&
-                          this.currentlyPlayingRefs.push(ref)
-                        }
+                        ref={ref}
                       >
-                        <td>{prediction.time}</td>
+                        <td>
+                          <code>{timeCode}</code>
+                        </td>
                         <td
                           style={{
                             color: stringToRGBA(prediction.classifier, {
@@ -306,23 +334,18 @@ class App extends React.Component<IMedia, IAppState> {
                             })
                           }}
                         >
-                          {prediction.classifier}
+                          <code>{prediction.classifier}</code>
                         </td>
-                        <td>{prediction.confidence}</td>
-                        <td>{"duration" in prediction ? "Audio" : "Video"}</td>
                         <td>
-                          <button
-                            onClick={_ => {
-                              const { current } = this.playerRef;
-                              if (current) {
-                                const fraction =
-                                  prediction.time / 1000 / duration;
-                                current.seekTo(fraction);
-                              }
-                            }}
-                          >
-                            Seek
-                          </button>
+                          <code>{prediction.confidence}</code>
+                        </td>
+                        <td>
+                          <code>
+                            {"duration" in prediction ? "Audio" : "Video"}
+                          </code>
+                        </td>
+                        <td>
+                          <button onClick={onPlay}>Seek</button>
                         </td>
                       </tr>
                     );
