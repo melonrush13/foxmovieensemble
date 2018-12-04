@@ -33,14 +33,10 @@ interface IAudioPrediction extends IPrediction {
 }
 
 interface IAppState {
-  url: string;
   volume: number;
-  loop: boolean;
   playbackRate: number;
-  boxHeight: number;
-  boxWidth: number;
   categories: string[];
-  predictionsByTime: { [key: number]: IPrediction[] | undefined };
+  predictionsByTime: { [seconds: number]: IPrediction[] | undefined };
   currentPlaybackTime: number;
 }
 
@@ -54,12 +50,8 @@ class App extends React.Component<IMedia, IAppState> {
 
   state: IAppState = {
     currentPlaybackTime: 0,
-    url: this.props.sourceUrl, // url: '',
     volume: 0.8,
-    loop: true,
     playbackRate: 1.0,
-    boxHeight: 100,
-    boxWidth: 100,
     categories: Object.keys(
       this.props.predictions.reduce(
         (categories, { classifier }) => ({ ...categories, [classifier]: true }),
@@ -105,12 +97,12 @@ class App extends React.Component<IMedia, IAppState> {
   render() {
     this.currentlyPlayingRefs = [];
     const {
-      url,
       volume,
       playbackRate,
       predictionsByTime,
       currentPlaybackTime
     } = this.state;
+    const { title, predictions, sourceUrl } = this.props;
 
     const reactPlayer = this.playerRef.current;
     const duration = (reactPlayer && reactPlayer.getDuration()) || -1;
@@ -130,7 +122,7 @@ class App extends React.Component<IMedia, IAppState> {
     const currentVideoPredictions = currentPredictions.filter(
       ({ x, y, width, height, time }: any) => x && y && width && height && time
     ) as IVideoPrediction[];
-    const currentAudioPredictions = this.props.predictions.filter(
+    const currentAudioPredictions = predictions.filter(
       ({ time, duration }: any) =>
         duration &&
         time &&
@@ -149,7 +141,7 @@ class App extends React.Component<IMedia, IAppState> {
         }}
       >
         <section id="header">
-          <h1>{this.props.title}</h1>
+          <h1>{title}</h1>
         </section>
 
         <div
@@ -169,12 +161,12 @@ class App extends React.Component<IMedia, IAppState> {
             <div className="player-video" style={{ position: "relative" }}>
               <ReactPlayer
                 ref={this.playerRef}
-                url={url}
+                url={sourceUrl}
                 controls={true}
                 volume={volume}
                 playbackRate={playbackRate}
-                onProgress={({ playedSeconds }) => {
-                  this.setState({ currentPlaybackTime: playedSeconds });
+                onProgress={({ playedSeconds: currentPlaybackTime }) => {
+                  this.setState({ currentPlaybackTime });
                 }}
                 progressInterval={250}
                 onSeek={this.onSeek}
@@ -289,7 +281,7 @@ class App extends React.Component<IMedia, IAppState> {
                 </tr>
               </thead>
               <tbody>
-                {this.props.predictions
+                {predictions
                   .sort((a, b) => a.time - b.time)
                   .map(prediction => {
                     const isAudio = "duration" in prediction;
