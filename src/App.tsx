@@ -1,15 +1,14 @@
-import React from "react";
-import { stringToRGBA } from "./colour";
-// import "./App.css";
-import ReactPlayer from "react-player";
 import Peaks from "peaks.js";
-import { Stage, Layer, Rect, Path } from "react-konva";
+import React from "react";
+import { Layer, Path, Rect, Stage } from "react-konva";
+import ReactPlayer from "react-player";
+import { stringToRGBA } from "./colour";
 import { secondsToTime } from "./time";
 
 export interface IMedia {
   title: string;
   sourceUrl: string; // URL to either video, image, or audio file
-  predictions: (IVideoPrediction | IAudioPrediction)[];
+  predictions: Array<IVideoPrediction | IAudioPrediction>;
 }
 
 interface IPrediction {
@@ -39,16 +38,7 @@ interface IAppState {
 }
 
 class App extends React.Component<IMedia, IAppState> {
-  constructor(props: any) {
-    super(props);
-  }
-
-  private playerRef = React.createRef<ReactPlayer>();
-  private currentlyPlayingRefs: HTMLElement[] = [];
-  private peaksContainerRef = React.createRef<HTMLDivElement>();
-  private peaksAudioRef = React.createRef<HTMLAudioElement>();
-
-  state: IAppState = {
+  public state: IAppState = {
     peakInstance: null,
     currentPlaybackTime: 0,
     volume: 0.8,
@@ -70,6 +60,15 @@ class App extends React.Component<IMedia, IAppState> {
     }, {})
   };
 
+  private playerRef = React.createRef<ReactPlayer>();
+  private currentlyPlayingRefs: HTMLElement[] = [];
+  private peaksContainerRef = React.createRef<HTMLDivElement>();
+  private peaksAudioRef = React.createRef<HTMLAudioElement>();
+
+  constructor(props: any) {
+    super(props);
+  }
+
   public componentDidMount() {
     const audioPredictions = this.props.predictions.filter(
       p => "time" in p && "duration" in p
@@ -88,15 +87,12 @@ class App extends React.Component<IMedia, IAppState> {
       mediaElement: this.peaksAudioRef.current as Element,
       audioContext: new AudioContext(),
       pointMarkerColor: "#006eb0",
-      showPlayheadTime: true,
-      segments: audioSegments
+      showPlayheadTime: true
+      // segments: audioSegments
     };
     const peakInstance = Peaks.init(options);
 
-    //console.log(peakInstance.segments.getSegments());
-    this.setState({ peakInstance }, () => {
-      this.forceUpdate();
-    });
+    this.setState({ peakInstance });
   }
 
   public componentDidUpdate() {
@@ -106,23 +102,23 @@ class App extends React.Component<IMedia, IAppState> {
     });
   }
 
-  onSeek = (newTime: number) => {
+  public onSeek = (newTime: number) => {
     console.log("new Time: " + newTime);
   };
 
-  seek = (e: number) => {
+  public seek = (e: number) => {
     const { current } = this.playerRef;
     if (current) {
       current.seekTo(e);
     }
   };
 
-  setPlaybackRate = (rate: number) => {
+  public setPlaybackRate = (rate: number) => {
     console.log("Setting playback rate: " + rate);
     this.setState({ playbackRate: rate });
   };
 
-  render() {
+  public render() {
     this.currentlyPlayingRefs = [];
     const {
       volume,
@@ -151,8 +147,8 @@ class App extends React.Component<IMedia, IAppState> {
       ({ x, y, width, height, time }: any) => x && y && width && height && time
     ) as IVideoPrediction[];
     const currentAudioPredictions = predictions.filter(
-      ({ time, duration }: any) =>
-        duration &&
+      ({ time, duration: pDuration }: any) =>
+        pDuration &&
         time &&
         currentPlaybackTime >= time / 1000 &&
         currentPlaybackTime <= (time + duration) / 1000
@@ -185,7 +181,6 @@ class App extends React.Component<IMedia, IAppState> {
             className="video-player"
             style={{ border: "1px dotted grey", flex: "1" }}
           >
-            <h2>Visualizer</h2>
             <div className="player-video" style={{ position: "relative" }}>
               <ReactPlayer
                 ref={this.playerRef}
@@ -193,18 +188,22 @@ class App extends React.Component<IMedia, IAppState> {
                 controls={true}
                 volume={volume}
                 playbackRate={playbackRate}
-                onProgress={({ playedSeconds: currentPlaybackTime }) => {
-                  this.setState({ currentPlaybackTime });
+                onProgress={({ playedSeconds }) => {
+                  this.setState({ currentPlaybackTime: playedSeconds });
                 }}
                 progressInterval={250}
                 onSeek={this.onSeek}
                 onPause={() => {
                   const { peakInstance } = this.state;
-                  peakInstance && peakInstance.player.pause();
+                  if (peakInstance) {
+                    peakInstance.player.pause();
+                  }
                 }}
                 onPlay={() => {
                   const { peakInstance } = this.state;
-                  peakInstance && peakInstance.player.play();
+                  if (peakInstance) {
+                    peakInstance.player.play();
+                  }
                 }}
               />
               <Stage
@@ -256,7 +255,7 @@ class App extends React.Component<IMedia, IAppState> {
               </Stage>
             </div>
             <div ref={this.peaksContainerRef} />
-            <audio ref={this.peaksAudioRef} controls>
+            <audio ref={this.peaksAudioRef}>
               <source src={this.props.sourceUrl} type="audio/mpeg" />
             </audio>
             <h2 id="settings">Settings</h2>
@@ -298,7 +297,6 @@ class App extends React.Component<IMedia, IAppState> {
               flex: "1"
             }}
           >
-            <h2>Tags</h2>
             <table style={{ border: "1px dotted grey", width: "100%" }}>
               <thead>
                 <tr>
@@ -328,15 +326,22 @@ class App extends React.Component<IMedia, IAppState> {
                             1000
                         )
                       : formatTime(prediction.time / 1000);
-                    const onPlay = (_: React.MouseEvent) => {
+                    const play = <T extends {}>(_: React.MouseEvent<T>) => {
                       const { current } = this.playerRef;
+                      const { peakInstance } = this.state;
                       if (current) {
                         const fraction = prediction.time / 1000 / duration;
                         current.seekTo(fraction);
                       }
+                      if (peakInstance) {
+                        peakInstance.player.seek(prediction.time / 1000);
+                      }
                     };
-                    const ref = (ref: HTMLSpanElement | null) =>
-                      isPlaying && ref && this.currentlyPlayingRefs.push(ref);
+                    const ref = (r: HTMLSpanElement | null) => {
+                      if (isPlaying && r) {
+                        this.currentlyPlayingRefs.push(r);
+                      }
+                    };
 
                     return (
                       <tr
@@ -367,23 +372,7 @@ class App extends React.Component<IMedia, IAppState> {
                           </code>
                         </td>
                         <td>
-                          <button
-                            onClick={_ => {
-                              const { current } = this.playerRef;
-                              const { peakInstance } = this.state;
-                              if (current) {
-                                const fraction =
-                                  prediction.time / 1000 / duration;
-                                current.seekTo(fraction);
-                                peakInstance &&
-                                  peakInstance.player.seek(
-                                    prediction.time / 1000
-                                  );
-                              }
-                            }}
-                          >
-                            Seek
-                          </button>
+                          <button onClick={play}>Seek</button>
                         </td>
                       </tr>
                     );

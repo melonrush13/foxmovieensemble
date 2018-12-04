@@ -4,8 +4,8 @@ export const stringToRGBA = (
 ): string => {
   const cacheStr = str + JSON.stringify(options);
   const cached =
-    _cache[cacheStr] ||
-    (_cache[cacheStr] = randomColour({
+    cache[cacheStr] ||
+    (cache[cacheStr] = randomColour({
       ...hexToRGB(stringToHexColour(str)),
       ...options
     }));
@@ -13,7 +13,7 @@ export const stringToRGBA = (
   return cached;
 };
 
-const _cache: { [key: string]: any } = {};
+const cache: { [key: string]: any } = {};
 
 /**
  * Convert any random string to a distinct 6 digit hex color string
@@ -27,6 +27,7 @@ const stringToHexColour = (str: string): string => {
 
   let colour = "#";
   for (let i = 0; i < 3; i++) {
+    // tslint:disable-next-line:no-bitwise
     const value = (hash >> (i * 8)) & 0xff;
     colour = colour + ("00" + value.toString(16)).substr(-2);
   }
