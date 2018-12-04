@@ -137,7 +137,6 @@ class App extends React.Component<IMedia, IAppState> {
         currentPlaybackTime >= time / 1000 &&
         currentPlaybackTime <= (time + duration) / 1000
     ) as IAudioPrediction[];
-    console.log(currentPredictions);
 
     return (
       <div
@@ -297,15 +296,17 @@ class App extends React.Component<IMedia, IAppState> {
                     const isPlaying =
                       Math.round(prediction.time / 1000) ===
                       Math.round(currentPlaybackTime);
+                    const formatTime = (seconds: number) =>
+                      secondsToTime(seconds, { useColons: true });
                     const timeCode = isAudio
-                      ? secondsToTime(prediction.time / 1000) +
+                      ? formatTime(prediction.time / 1000) +
                         " - " +
-                        secondsToTime(
+                        formatTime(
                           ((prediction as IAudioPrediction).duration +
                             prediction.time) /
                             1000
                         )
-                      : secondsToTime(prediction.time / 1000);
+                      : formatTime(prediction.time / 1000);
                     const onPlay = (_: React.MouseEvent) => {
                       const { current } = this.playerRef;
                       if (current) {
