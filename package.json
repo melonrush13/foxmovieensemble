@@ -11,6 +11,7 @@
     "ajv": "^6.5.5",
     "easeljs-react": "^0.1.1",
     "konva": "^2.5.1",
+    "peaks.js": "^0.9.13",
     "react": "^16.6.0",
     "react-dom": "^16.6.0",
     "react-konva": "^16.6.31",
