@@ -2,14 +2,10 @@ import React from "react";
 import { stringToRGBA } from "./colour";
 // import "./App.css";
 import ReactPlayer from "react-player";
-import { Stage, Layer, Rect, Transformer } from "react-konva";
-import Peaks, { init } from "peaks.js";
-import { any } from "prop-types";
+import Peaks from "peaks.js";
+import { Stage, Layer, Rect, Path } from "react-konva";
+import { secondsToTime } from "./time";
 
-//todo: have display one second before and one second
-//add color from evan's code, returns rgb string and defaults to opacity
-
-//todo:change color of table element when correct tag is being displayed
 export interface IMedia {
   title: string;
   sourceUrl: string; // URL to either video, image, or audio file
@@ -34,14 +30,10 @@ interface IAudioPrediction extends IPrediction {
 }
 
 interface IAppState {
-  url: string;
   volume: number;
-  loop: boolean;
   playbackRate: number;
-  boxHeight: number;
-  boxWidth: number;
   categories: string[];
-  predictionsByTime: { [key: number]: IPrediction[] | undefined };
+  predictionsByTime: { [seconds: number]: IPrediction[] | undefined };
   currentPlaybackTime: number;
   peakInstance: Peaks.PeaksInstance | null;
 }
@@ -59,12 +51,8 @@ class App extends React.Component<IMedia, IAppState> {
   state: IAppState = {
     peakInstance: null,
     currentPlaybackTime: 0,
-    url: this.props.sourceUrl, // url: '',
     volume: 0.8,
-    loop: true,
     playbackRate: 1.0,
-    boxHeight: 100,
-    boxWidth: 100,
     categories: Object.keys(
       this.props.predictions.reduce(
         (categories, { classifier }) => ({ ...categories, [classifier]: true }),
@@ -137,12 +125,12 @@ class App extends React.Component<IMedia, IAppState> {
   render() {
     this.currentlyPlayingRefs = [];
     const {
-      url,
       volume,
       playbackRate,
       predictionsByTime,
       currentPlaybackTime
     } = this.state;
+    const { title, predictions, sourceUrl } = this.props;
 
     const reactPlayer = this.playerRef.current;
     const duration = (reactPlayer && reactPlayer.getDuration()) || -1;
@@ -162,8 +150,12 @@ class App extends React.Component<IMedia, IAppState> {
     const currentVideoPredictions = currentPredictions.filter(
       ({ x, y, width, height, time }: any) => x && y && width && height && time
     ) as IVideoPrediction[];
-    const currentAudioPredictions = currentPredictions.filter(
-      ({ time, duration }: any) => time && duration
+    const currentAudioPredictions = predictions.filter(
+      ({ time, duration }: any) =>
+        duration &&
+        time &&
+        currentPlaybackTime >= time / 1000 &&
+        currentPlaybackTime <= (time + duration) / 1000
     ) as IAudioPrediction[];
 
     return (
@@ -177,7 +169,7 @@ class App extends React.Component<IMedia, IAppState> {
         }}
       >
         <section id="header">
-          <h1>{this.props.title}</h1>
+          <h1>{title}</h1>
         </section>
 
         <div
@@ -191,18 +183,18 @@ class App extends React.Component<IMedia, IAppState> {
         >
           <section
             className="video-player"
-            style={{ border: "1px dotted grey" }}
+            style={{ border: "1px dotted grey", flex: "1" }}
           >
             <h2>Visualizer</h2>
             <div className="player-video" style={{ position: "relative" }}>
               <ReactPlayer
                 ref={this.playerRef}
-                url={url}
+                url={sourceUrl}
                 controls={true}
                 volume={volume}
                 playbackRate={playbackRate}
-                onProgress={({ playedSeconds }) => {
-                  this.setState({ currentPlaybackTime: playedSeconds });
+                onProgress={({ playedSeconds: currentPlaybackTime }) => {
+                  this.setState({ currentPlaybackTime });
                 }}
                 progressInterval={250}
                 onSeek={this.onSeek}
@@ -239,23 +231,24 @@ class App extends React.Component<IMedia, IAppState> {
                         width={prediction.width}
                         height={prediction.height}
                         name={prediction.classifier}
-                        fill={stringToRGBA(prediction.classifier)}
+                        fill={stringToRGBA(prediction.classifier, {
+                          alpha: prediction.confidence / 100
+                        })}
                         stroke="black"
                       />
                     );
                   })}
                   {currentAudioPredictions.map(prediction => {
                     return (
-                      <Rect
-                        key={JSON.stringify(prediction)}
-                        x={0}
-                        y={0}
-                        width={videoWidth}
-                        height={videoHeight}
-                        name={prediction.classifier}
+                      <Path
                         fill={stringToRGBA(prediction.classifier, {
-                          alpha: 0.5
+                          alpha: prediction.confidence / 100
                         })}
+                        key={JSON.stringify(prediction)}
+                        x={20}
+                        y={20}
+                        scale={{ x: 5, y: 5 }}
+                        data="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM7.76 16.24l-1.41 1.41C4.78 16.1 4 14.05 4 12c0-2.05.78-4.1 2.34-5.66l1.41 1.41C6.59 8.93 6 10.46 6 12s.59 3.07 1.76 4.24zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm5.66 1.66l-1.41-1.41C17.41 15.07 18 13.54 18 12s-.59-3.07-1.76-4.24l1.41-1.41C19.22 7.9 20 9.95 20 12c0 2.05-.78 4.1-2.34 5.66zM12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
                       />
                     );
                   })}
@@ -301,11 +294,12 @@ class App extends React.Component<IMedia, IAppState> {
             style={{
               maxHeight: "100%",
               overflowY: "scroll",
-              border: "1px dotted grey"
+              border: "1px dotted grey",
+              flex: "1"
             }}
           >
             <h2>Tags</h2>
-            <table style={{ border: "1px dotted grey" }}>
+            <table style={{ border: "1px dotted grey", width: "100%" }}>
               <thead>
                 <tr>
                   <th>Time (ms)</th>
@@ -316,25 +310,45 @@ class App extends React.Component<IMedia, IAppState> {
                 </tr>
               </thead>
               <tbody>
-                {this.props.predictions
+                {predictions
                   .sort((a, b) => a.time - b.time)
                   .map(prediction => {
+                    const isAudio = "duration" in prediction;
                     const isPlaying =
                       Math.round(prediction.time / 1000) ===
                       Math.round(currentPlaybackTime);
+                    const formatTime = (seconds: number) =>
+                      secondsToTime(seconds, { useColons: true });
+                    const timeCode = isAudio
+                      ? formatTime(prediction.time / 1000) +
+                        " - " +
+                        formatTime(
+                          ((prediction as IAudioPrediction).duration +
+                            prediction.time) /
+                            1000
+                        )
+                      : formatTime(prediction.time / 1000);
+                    const onPlay = (_: React.MouseEvent) => {
+                      const { current } = this.playerRef;
+                      if (current) {
+                        const fraction = prediction.time / 1000 / duration;
+                        current.seekTo(fraction);
+                      }
+                    };
+                    const ref = (ref: HTMLSpanElement | null) =>
+                      isPlaying && ref && this.currentlyPlayingRefs.push(ref);
+
                     return (
                       <tr
                         style={{
                           background: isPlaying ? "lightgrey" : "unset"
                         }}
                         key={JSON.stringify(prediction)}
-                        ref={ref =>
-                          isPlaying &&
-                          ref &&
-                          this.currentlyPlayingRefs.push(ref)
-                        }
+                        ref={ref}
                       >
-                        <td>{prediction.time}</td>
+                        <td>
+                          <code>{timeCode}</code>
+                        </td>
                         <td
                           style={{
                             color: stringToRGBA(prediction.classifier, {
@@ -342,10 +356,16 @@ class App extends React.Component<IMedia, IAppState> {
                             })
                           }}
                         >
-                          {prediction.classifier}
+                          <code>{prediction.classifier}</code>
                         </td>
-                        <td>{prediction.confidence}</td>
-                        <td>{"duration" in prediction ? "Audio" : "Video"}</td>
+                        <td>
+                          <code>{prediction.confidence}</code>
+                        </td>
+                        <td>
+                          <code>
+                            {"duration" in prediction ? "Audio" : "Video"}
+                          </code>
+                        </td>
                         <td>
                           <button
                             onClick={_ => {
