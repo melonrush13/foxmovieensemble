@@ -79,14 +79,14 @@ class App extends React.Component<IMedia, IAppState> {
       return {
         startTime: p.time / 1000,
         endTime: p.time + p.duration / 1000,
-        color: "red"
+        color: stringToRGBA(p.classifier),
+        labelText: p.classifier
       };
     });
     const options: Peaks.PeaksOptions = {
       container: this.peaksContainerRef.current as HTMLElement,
       mediaElement: this.peaksAudioRef.current as Element,
       audioContext: new AudioContext(),
-      keyboard: true,
       pointMarkerColor: "#006eb0",
       showPlayheadTime: true,
       segments: audioSegments
