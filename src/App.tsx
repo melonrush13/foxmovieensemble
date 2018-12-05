@@ -36,6 +36,7 @@ interface IAppState {
   currentPlaybackTime: number;
   peakInstance?: Peaks.PeaksInstance;
   sourceUrl?: string;
+  waveformReady: boolean;
 }
 
 class App extends React.Component<IMedia, IAppState> {
@@ -44,6 +45,7 @@ class App extends React.Component<IMedia, IAppState> {
     volume: 0.8,
     playbackRate: 1.0,
     sourceUrl: this.props.sourceUrl,
+    waveformReady: false,
     categories: Object.keys(
       this.props.predictions.reduce(
         (categories, { classifier }) => ({ ...categories, [classifier]: true }),
@@ -115,6 +117,9 @@ class App extends React.Component<IMedia, IAppState> {
         points: videoPoints
       };
       const peakInstance = Peaks.init(options);
+      peakInstance.on("peaks.ready", () => {
+        this.setState({ waveformReady: true });
+      });
 
       this.setState({ peakInstance });
     }
@@ -143,7 +148,8 @@ class App extends React.Component<IMedia, IAppState> {
       playbackRate,
       predictionsByTime,
       currentPlaybackTime,
-      sourceUrl
+      sourceUrl,
+      waveformReady
     } = this.state;
     const { title, predictions } = this.props;
 
@@ -220,7 +226,6 @@ class App extends React.Component<IMedia, IAppState> {
                     onProgress={({ playedSeconds }) => {
                       this.setState({ currentPlaybackTime: playedSeconds });
                     }}
-
                     progressInterval={250}
                     onSeek={this.onSeek}
                     onPause={() => {
@@ -285,6 +290,13 @@ class App extends React.Component<IMedia, IAppState> {
                   </Stage>
                 </div>
                 <div ref={this.peaksContainerRef} />
+
+                {waveformReady === false && (
+                  <code>
+                    Generating audio waveform. May take a long time depending on
+                    media length....
+                  </code>
+                )}
                 <audio ref={this.peaksAudioRef}>
                   <source src={sourceUrl} type="audio/mpeg" />
                 </audio>
