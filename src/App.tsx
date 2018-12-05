@@ -232,7 +232,8 @@ class App extends React.Component<IMedia, IAppState> {
                 </audio>
                 <div className="player-video" style={{ position: "relative" }}>
                   <ReactPlayer
-                    width="100%"
+                    width= "100%"
+                    height= "100%"
                     ref={this.playerRef}
                     url={sourceUrl}
                     playing= {this.state.playing}
