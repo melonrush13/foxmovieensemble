@@ -30,6 +30,7 @@ interface IAudioPrediction extends IPrediction {
 
 interface IAppState {
   volume: number;
+  playing: boolean;
   playbackRate: number;
   categories: string[];
   predictionsByTime: { [seconds: number]: IPrediction[] | undefined };
@@ -41,7 +42,8 @@ interface IAppState {
 class App extends React.Component<IMedia, IAppState> {
   public state: IAppState = {
     currentPlaybackTime: 0,
-    volume: 0.8,
+    playing: false,
+    volume: 0.0,
     playbackRate: 1.0,
     sourceUrl: this.props.sourceUrl,
     categories: Object.keys(
@@ -71,6 +73,7 @@ class App extends React.Component<IMedia, IAppState> {
   }
 
   public componentDidUpdate() {
+    console.log(this.state.playing);
     // Ensure the first label in always in view
     this.currentlyPlayingRefs.slice(0, 1).forEach(el => {
       el.scrollIntoView({ block: "center" });
@@ -117,9 +120,23 @@ class App extends React.Component<IMedia, IAppState> {
       const peakInstance = Peaks.init(options);
 
       this.setState({ peakInstance });
+
+      peakInstance.on('player_seek', (e: number) => {
+        const { current } = this.playerRef;
+        if (current) {
+          current.seekTo(e);
+        }
+      });
+    
+  
     }
+    
   }
 
+  public onPlay = () => {
+   console.log("playing!")
+    this.setState({playing: true});
+  }
   public onSeek = (newTime: number) => {
     console.log("new Time: " + newTime);
   };
@@ -140,7 +157,6 @@ class App extends React.Component<IMedia, IAppState> {
     this.currentlyPlayingRefs = [];
     const {
       volume,
-      playbackRate,
       predictionsByTime,
       currentPlaybackTime,
       sourceUrl
@@ -210,13 +226,18 @@ class App extends React.Component<IMedia, IAppState> {
                   overflowY: "scroll"
                 }}
               >
+                <audio  controls  onPlay={() => this.setState({playing: true})} onPause={() => this.setState({playing: false})} 
+                ref={this.peaksAudioRef} onSeeking={() => this.setState({playing: true})} style ={{width: "100%"}} >
+                  <source src={sourceUrl} type="audio/mpeg" />
+                </audio>
                 <div className="player-video" style={{ position: "relative" }}>
                   <ReactPlayer
+                    width="100%"
                     ref={this.playerRef}
                     url={sourceUrl}
-                    controls={true}
+                    playing= {this.state.playing}
+                    controls={false}
                     volume={volume}
-                    playbackRate={playbackRate}
                     onProgress={({ playedSeconds }) => {
                       this.setState({ currentPlaybackTime: playedSeconds });
                     }}
@@ -285,9 +306,7 @@ class App extends React.Component<IMedia, IAppState> {
                   </Stage>
                 </div>
                 <div ref={this.peaksContainerRef} />
-                <audio ref={this.peaksAudioRef}>
-                  <source src={sourceUrl} type="audio/mpeg" />
-                </audio>
+
               </div>
             ) : (
               // Allow user to input media from local filesystem
