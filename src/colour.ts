@@ -57,5 +57,5 @@ const randomColour = ({
   red = Math.floor(Math.random() * 256),
   green = Math.floor(Math.random() * 256),
   blue = Math.floor(Math.random() * 256),
-  alpha = 0.5
+  alpha = 1.0
 }) => `rgba(${red},${green},${blue}, ${alpha})`;

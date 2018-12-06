@@ -9,12 +9,14 @@ export interface IMedia {
   title: string;
   sourceUrl?: string; // URL to either video, image, or audio file
   predictions: Array<IVideoPrediction | IAudioPrediction>;
+  subtitles?: { [language: string]: string };
 }
 
 interface IPrediction {
   classifier: string;
   confidence: number; // 0 - 100
   time: number; // time in ms relative to 0:00:00.000 in source
+  model?: string;
 }
 
 interface IVideoPrediction extends IPrediction {
@@ -37,6 +39,8 @@ interface IAppState {
   peakInstance?: Peaks.PeaksInstance;
   sourceUrl?: string;
   waveformReady: boolean;
+  peaksError?: string;
+  models: string[];
 }
 
 class App extends React.Component<IMedia, IAppState> {
@@ -46,6 +50,9 @@ class App extends React.Component<IMedia, IAppState> {
     playbackRate: 1.0,
     sourceUrl: this.props.sourceUrl,
     waveformReady: false,
+    models: [...new Set(this.props.predictions.map(p => p.model || ""))].filter(
+      e => e
+    ),
     categories: Object.keys(
       this.props.predictions.reduce(
         (categories, { classifier }) => ({ ...categories, [classifier]: true }),
@@ -75,7 +82,7 @@ class App extends React.Component<IMedia, IAppState> {
   public componentDidUpdate() {
     // Ensure the first label in always in view
     this.currentlyPlayingRefs.slice(0, 1).forEach(el => {
-      el.scrollIntoView({ block: "center" });
+      el.scrollIntoView({ block: "start" });
     });
 
     // Init peaks
@@ -120,6 +127,14 @@ class App extends React.Component<IMedia, IAppState> {
       peakInstance.on("peaks.ready", () => {
         this.setState({ waveformReady: true });
       });
+      peakInstance.on("error", (error: Error) => {
+        alert(error);
+        console.error(error);
+        this.setState({
+          peaksError: error.message,
+          waveformReady: true
+        });
+      });
 
       this.setState({ peakInstance });
     }
@@ -149,9 +164,11 @@ class App extends React.Component<IMedia, IAppState> {
       predictionsByTime,
       currentPlaybackTime,
       sourceUrl,
-      waveformReady
+      waveformReady,
+      peaksError,
+      models
     } = this.state;
-    const { title, predictions } = this.props;
+    const { title, predictions, subtitles } = this.props;
 
     const reactPlayer = this.playerRef.current;
     const duration = (reactPlayer && reactPlayer.getDuration()) || -1;
@@ -178,6 +195,7 @@ class App extends React.Component<IMedia, IAppState> {
         currentPlaybackTime >= time / 1000 &&
         currentPlaybackTime <= (time + duration) / 1000
     ) as IAudioPrediction[];
+    const hasModelMetadata = models.length > 0;
 
     return (
       <div
@@ -220,6 +238,22 @@ class App extends React.Component<IMedia, IAppState> {
                   <ReactPlayer
                     ref={this.playerRef}
                     url={sourceUrl}
+                    config={{
+                      file: {
+                        tracks: subtitles
+                          ? Object.keys(subtitles).map(language => {
+                              return {
+                                kind: "subtitles",
+                                src: subtitles[language],
+                                srcLang: language,
+                                label: language
+                              };
+                            })
+                          : []
+                      }
+                    }}
+                    width="100%"
+                    height="100%"
                     controls={true}
                     volume={volume}
                     playbackRate={playbackRate}
@@ -256,31 +290,48 @@ class App extends React.Component<IMedia, IAppState> {
                     }}
                   >
                     <Layer>
-                      {currentVideoPredictions.map(prediction => {
-                        return (
-                          <Rect
-                            key={JSON.stringify(prediction)}
-                            x={prediction.x}
-                            y={prediction.y}
-                            width={prediction.width}
-                            height={prediction.height}
-                            name={prediction.classifier}
-                            fill={stringToRGBA(prediction.classifier, {
-                              alpha: prediction.confidence / 100
-                            })}
-                            stroke="black"
-                          />
-                        );
-                      })}
-                      {currentAudioPredictions.map(prediction => {
-                        return (
+                      {currentVideoPredictions.map(p => {
+                        const hasValidBoundingBox = p.width > 0 && p.height > 0;
+                        return [
+                          hasValidBoundingBox && (
+                            <Rect
+                              key={JSON.stringify(p)}
+                              x={p.x}
+                              y={p.y}
+                              width={p.width}
+                              height={p.height}
+                              name={p.classifier}
+                              fill={stringToRGBA(p.classifier, {
+                                alpha: p.confidence / 100
+                              })}
+                              stroke="black"
+                            />
+                          ),
                           <Path
-                            fill={stringToRGBA(prediction.classifier, {
-                              alpha: prediction.confidence / 100
+                            fill={stringToRGBA(p.classifier, {
+                              alpha: p.confidence / 100
                             })}
-                            key={JSON.stringify(prediction)}
+                            key={JSON.stringify(p) + "-icon"}
+                            width={videoHeight / 10}
+                            height={videoHeight / 10}
                             x={20}
                             y={20}
+                            scale={{ x: 5, y: 5 }}
+                            data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5.04-6.71l-2.75 3.54-1.96-2.36L6.5 17h11l-3.54-4.71z"
+                          />
+                        ];
+                      })}
+                      {currentAudioPredictions.map(p => {
+                        return (
+                          <Path
+                            fill={stringToRGBA(p.classifier, {
+                              alpha: p.confidence / 100
+                            })}
+                            key={JSON.stringify(p)}
+                            width={videoHeight / 10}
+                            height={videoHeight / 10}
+                            x={20}
+                            y={40 + videoHeight / 10}
                             scale={{ x: 5, y: 5 }}
                             data="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM7.76 16.24l-1.41 1.41C4.78 16.1 4 14.05 4 12c0-2.05.78-4.1 2.34-5.66l1.41 1.41C6.59 8.93 6 10.46 6 12s.59 3.07 1.76 4.24zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm5.66 1.66l-1.41-1.41C17.41 15.07 18 13.54 18 12s-.59-3.07-1.76-4.24l1.41-1.41C19.22 7.9 20 9.95 20 12c0 2.05-.78 4.1-2.34 5.66zM12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
                           />
@@ -290,32 +341,39 @@ class App extends React.Component<IMedia, IAppState> {
                   </Stage>
                 </div>
                 <div ref={this.peaksContainerRef} />
-
-                {waveformReady === false && (
+                {!waveformReady && (
                   <code>
                     Generating audio waveform. May take a long time depending on
-                    media length....
+                    media length...
                   </code>
                 )}
+                {peaksError && <pre>ERROR: {peaksError}</pre>}
                 <audio ref={this.peaksAudioRef}>
                   <source src={sourceUrl} type="audio/mpeg" />
                 </audio>
               </div>
             ) : (
               // Allow user to input media from local filesystem
-              <input
-                type="file"
-                accept="video/*"
-                onChange={ev => {
-                  const { files } = ev.currentTarget;
-                  if (files) {
-                    const file = files[0];
-                    this.setState({
-                      sourceUrl: URL.createObjectURL(file)
-                    });
-                  }
-                }}
-              />
+              <figure>
+                <figcaption>
+                  No MediaFile <code>url</code> found associated with with{" "}
+                  <code>{title}</code>. Select local media file to underlay
+                  labels.
+                </figcaption>
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={ev => {
+                    const { files } = ev.currentTarget;
+                    if (files) {
+                      const file = files[0];
+                      this.setState({
+                        sourceUrl: URL.createObjectURL(file)
+                      });
+                    }
+                  }}
+                />
+              </figure>
             )}
           </section>
           <section
@@ -331,6 +389,7 @@ class App extends React.Component<IMedia, IAppState> {
                 <tr>
                   <th>Time (ms)</th>
                   <th>Classifier</th>
+                  {hasModelMetadata && <th>Model</th>}
                   <th>Confidence</th>
                   <th>Video/Audio</th>
                   <th>Button</th>
@@ -392,6 +451,12 @@ class App extends React.Component<IMedia, IAppState> {
                         >
                           <code>{prediction.classifier}</code>
                         </td>
+
+                        {hasModelMetadata && (
+                          <td>
+                            <code>{prediction.model || "---"}</code>
+                          </td>
+                        )}
                         <td>
                           <code>{prediction.confidence}</code>
                         </td>
