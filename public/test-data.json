@@ -5,7 +5,7 @@
   "predictions": [
     {
       "confidence": 33,
-      "classifier": "GUNSHOT",
+      "classifier": "VIOLENCE",
       "time": 160,
       "x": 1193,
       "y": 203,
@@ -14,7 +14,7 @@
     },
     {
       "confidence": 7,
-      "classifier": "GUNSHOT",
+      "classifier": "NUDITY",
       "time": 517,
       "x": 1076,
       "y": 524,
